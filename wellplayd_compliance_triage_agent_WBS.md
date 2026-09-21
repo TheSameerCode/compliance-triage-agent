@@ -641,7 +641,7 @@ modelSuggestsHumanReview:
 
 ---
 
-### WBS 1.3 — Define final application decision schema `[ ]`
+### WBS 1.3 — Define final application decision schema `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2
