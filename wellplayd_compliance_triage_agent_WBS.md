@@ -772,7 +772,7 @@ Avoid a `RESOLVED` transition in the AI pipeline; final resolution is a human co
 
 ---
 
-### WBS 2.4 — Seed synthetic prior cases `[ ]`
+### WBS 2.4 — Seed synthetic prior cases `[x]`
 
 **Priority:** P1  
 **Dependencies:** 2.2
