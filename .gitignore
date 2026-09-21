@@ -5,6 +5,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+src/generated/prisma/
 
 # Environment files and local secrets
 .env
@@ -35,4 +36,3 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
-

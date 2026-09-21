@@ -694,7 +694,7 @@ Create `docs/reliability.md` and explicitly document invariants:
 
 ## WBS 2 — Database and Persistence
 
-### WBS 2.1 — Add PostgreSQL and Prisma `[ ]`
+### WBS 2.1 — Add PostgreSQL and Prisma `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.4, 1.1–1.3
@@ -713,7 +713,7 @@ Create `docs/reliability.md` and explicitly document invariants:
 
 ---
 
-### WBS 2.2 — Model `Case` `[ ]`
+### WBS 2.2 — Model `Case` `[x]`
 
 **Priority:** P0  
 **Dependencies:** 2.1

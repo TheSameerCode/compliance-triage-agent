@@ -4,4 +4,5 @@ evals/results/
 node_modules/
 package-lock.json
 prisma/migrations/
+src/generated/prisma/
 wellplayd_compliance_triage_agent_WBS.md

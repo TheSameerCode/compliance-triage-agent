@@ -11,6 +11,7 @@ export default tseslint.config(
       'evals/results/**',
       'node_modules/**',
       'prisma/migrations/**',
+      'src/generated/prisma/**',
     ],
   },
   {

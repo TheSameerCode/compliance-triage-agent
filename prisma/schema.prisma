@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CaseStatus {
+  NEW
+  ANALYZED
+  REVIEW_REQUIRED
+}
+
+model Case {
+  id           String     @id @default(cuid())
+  description  String     @db.Text
+  reporterType String?    @db.VarChar(100)
+  subjectRef   String?    @db.VarChar(128)
+  status       CaseStatus @default(NEW)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([subjectRef])
+}
