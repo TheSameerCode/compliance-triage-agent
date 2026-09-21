@@ -47,4 +47,13 @@ describe('caseAnalysisSchema', () => {
       false,
     );
   });
+
+  it.each([
+    ['null', null],
+    ['plain text', 'safeguarding/high'],
+    ['an array', [validAnalysis]],
+    ['an incomplete object', { category: 'other' }],
+  ])('rejects malformed model output represented as %s', (_label, payload) => {
+    expect(caseAnalysisSchema.safeParse(payload).success).toBe(false);
+  });
 });

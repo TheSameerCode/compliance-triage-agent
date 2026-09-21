@@ -1636,7 +1636,7 @@ Configure deterministic local test execution with no live network model calls.
 
 ---
 
-### WBS 12.2 — Implement schema unit tests `[ ]`
+### WBS 12.2 — Implement schema unit tests `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.1–1.3, 12.1

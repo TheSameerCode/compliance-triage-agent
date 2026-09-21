@@ -23,6 +23,10 @@ describe('caseInputSchema', () => {
     );
   });
 
+  it('rejects an empty description after trimming whitespace', () => {
+    expect(caseInputSchema.safeParse({ description: '   ' }).success).toBe(false);
+  });
+
   it('rejects a description above the explicit maximum', () => {
     expect(() =>
       caseInputSchema.parse({ description: 'a'.repeat(MAX_CASE_DESCRIPTION_LENGTH + 1) }),
