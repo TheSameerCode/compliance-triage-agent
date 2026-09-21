@@ -493,7 +493,7 @@ Rules:
 
 ---
 
-### WBS 0.2 — Initialize TypeScript/Node project `[ ]`
+### WBS 0.2 — Initialize TypeScript/Node project `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.1
