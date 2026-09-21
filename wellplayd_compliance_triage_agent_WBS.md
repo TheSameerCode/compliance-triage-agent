@@ -550,7 +550,7 @@ all complete successfully on the initial skeleton.
 
 ---
 
-### WBS 0.4 — Create configuration loader `[ ]`
+### WBS 0.4 — Create configuration loader `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.2

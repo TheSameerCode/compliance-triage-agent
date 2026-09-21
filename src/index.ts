@@ -1,3 +1,6 @@
-const serviceName = 'compliance-triage-agent';
+import { loadEnvironment } from './config/env.js';
 
-console.info(`${serviceName} initialized`);
+const serviceName = 'compliance-triage-agent';
+const environment = loadEnvironment();
+
+console.info(`${serviceName} initialized on port ${environment.PORT}`);
