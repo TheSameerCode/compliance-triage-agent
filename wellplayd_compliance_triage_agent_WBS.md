@@ -1622,7 +1622,7 @@ The output should make regressions visible, particularly when one metric improve
 
 ## WBS 12 — Automated Software Tests
 
-### WBS 12.1 — Configure Vitest `[ ]`
+### WBS 12.1 — Configure Vitest `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.2
