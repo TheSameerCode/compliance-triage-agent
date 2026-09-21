@@ -575,7 +575,7 @@ all complete successfully on the initial skeleton.
 
 ## WBS 1 — Domain Contracts and Safety Invariants
 
-### WBS 1.1 — Define case input schema `[ ]`
+### WBS 1.1 — Define case input schema `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.2
