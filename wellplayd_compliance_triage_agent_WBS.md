@@ -459,7 +459,7 @@ Rules:
 
 ## WBS 0 — Repository and Engineering Baseline
 
-### WBS 0.1 — Create repository and project metadata `[ ]`
+### WBS 0.1 — Create repository and project metadata `[x]`
 
 **Priority:** P0  
 **Dependencies:** None
