@@ -1401,7 +1401,7 @@ Create `docs/privacy.md` explaining:
 
 ## WBS 10 — Golden Evaluation Dataset
 
-### WBS 10.1 — Define evaluation fixture schema `[ ]`
+### WBS 10.1 — Define evaluation fixture schema `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2, 1.3
