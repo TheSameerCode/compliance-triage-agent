@@ -740,7 +740,7 @@ Avoid a `RESOLVED` transition in the AI pipeline; final resolution is a human co
 
 ---
 
-### WBS 2.3 — Model `AnalysisRun` `[ ]`
+### WBS 2.3 — Model `AnalysisRun` `[x]`
 
 **Priority:** P0  
 **Dependencies:** 2.1, 2.2

@@ -13,15 +13,64 @@ enum CaseStatus {
   REVIEW_REQUIRED
 }
 
+enum AnalysisCategory {
+  safeguarding
+  harassment
+  discrimination
+  financial
+  privacy
+  other
+}
+
+enum AnalysisSeverity {
+  low
+  medium
+  high
+}
+
+enum AnalysisStatus {
+  completed
+  fallback
+}
+
 model Case {
-  id           String     @id @default(cuid())
-  description  String     @db.Text
-  reporterType String?    @db.VarChar(100)
-  subjectRef   String?    @db.VarChar(128)
-  status       CaseStatus @default(NEW)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id           String        @id @default(cuid())
+  description  String        @db.Text
+  reporterType String?       @db.VarChar(100)
+  subjectRef   String?       @db.VarChar(128)
+  status       CaseStatus    @default(NEW)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  analysisRuns AnalysisRun[]
 
   @@index([status, createdAt])
   @@index([subjectRef])
+}
+
+/// Append-only analysis audit record. Production code creates new rows instead of updating runs.
+model AnalysisRun {
+  id                       String            @id @default(cuid())
+  caseId                   String
+  model                    String            @db.VarChar(200)
+  promptVersion            String            @db.VarChar(100)
+  category                 AnalysisCategory?
+  severity                 AnalysisSeverity?
+  summary                  String?           @db.Text
+  confidence               Float?
+  missingInformation       Json
+  indicators               Json
+  modelSuggestsHumanReview Boolean?
+  reviewRequired           Boolean
+  reviewReasons            Json
+  analysisStatus           AnalysisStatus
+  retryCount               Int               @default(0)
+  latencyMs                Int
+  inputTokens              Int?
+  outputTokens             Int?
+  estimatedCost            Decimal?          @db.Decimal(12, 6)
+  createdAt                DateTime          @default(now())
+  case                     Case              @relation(fields: [caseId], references: [id], onDelete: Restrict)
+
+  @@index([caseId, createdAt])
+  @@index([reviewRequired, createdAt])
 }

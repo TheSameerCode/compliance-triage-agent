@@ -33,9 +33,41 @@ try {
     throw new Error('Case persistence check returned an unexpected record');
   }
 
-  console.info('Database connectivity and case persistence checks passed');
+  const analysisRunData = {
+    caseId: smokeCase.id,
+    model: 'fake-smoke-model',
+    promptVersion: 'smoke-v1',
+    category: 'other' as const,
+    severity: 'low' as const,
+    summary: 'Synthetic smoke-test analysis.',
+    confidence: 0.9,
+    missingInformation: [],
+    indicators: ['synthetic smoke test'],
+    modelSuggestsHumanReview: false,
+    reviewRequired: false,
+    reviewReasons: [],
+    analysisStatus: 'completed' as const,
+    retryCount: 0,
+    latencyMs: 1,
+  };
+
+  const firstRun = await prisma.analysisRun.create({ data: analysisRunData });
+  const secondRun = await prisma.analysisRun.create({ data: analysisRunData });
+
+  if (firstRun.id === secondRun.id) {
+    throw new Error('Separate analysis executions must create distinct run records');
+  }
+
+  const storedRunCount = await prisma.analysisRun.count({ where: { caseId: smokeCase.id } });
+
+  if (storedRunCount !== 2) {
+    throw new Error('Analysis run persistence check returned an unexpected count');
+  }
+
+  console.info('Database connectivity, case, and analysis-run persistence checks passed');
 } finally {
   if (smokeCaseId !== undefined) {
+    await prisma.analysisRun.deleteMany({ where: { caseId: smokeCaseId } });
     await prisma.case.deleteMany({ where: { id: smokeCaseId } });
   }
 
