@@ -670,7 +670,7 @@ analysisStatus: completed | fallback
 
 ---
 
-### WBS 1.4 — Document safety invariants `[ ]`
+### WBS 1.4 — Document safety invariants `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2, 1.3

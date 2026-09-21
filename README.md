@@ -7,3 +7,4 @@ A production-oriented LLM compliance triage demo focused on validated structured
 ## Implementation documentation
 
 - [Phase 1: Engineering Foundation](docs/phase-1-engineering-foundation.md)
+- [Reliability and Safety Invariants](docs/reliability.md)
