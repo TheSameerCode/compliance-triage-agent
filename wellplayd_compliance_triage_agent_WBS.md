@@ -603,7 +603,7 @@ all complete successfully on the initial skeleton.
 
 ---
 
-### WBS 1.2 — Define LLM analysis schema `[ ]`
+### WBS 1.2 — Define LLM analysis schema `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.1
