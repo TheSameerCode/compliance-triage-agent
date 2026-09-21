@@ -532,7 +532,7 @@ all complete successfully on the initial skeleton.
 
 ---
 
-### WBS 0.3 — Add linting and formatting `[ ]`
+### WBS 0.3 — Add linting and formatting `[x]`
 
 **Priority:** P1  
 **Dependencies:** 0.2
