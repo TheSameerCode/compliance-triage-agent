@@ -71,10 +71,8 @@ The optional live smoke command sends one fixed synthetic report through both th
 npm run llm:smoke
 ```
 
-## Deferred work
+## Downstream integration
 
-WBS 5.3 and 5.4 remain open. Successful analysis persistence depends on the deterministic human-review policy from WBS 7, because the analysis and the application-owned routing decision must be stored together. The external model call will remain outside the later database transaction.
-
-The analyze HTTP endpoint also remains deferred until validation, review policy, persistence, and fallback behavior form a complete fail-closed workflow.
+Phase 8 connects this service to deterministic review policy, atomic analysis persistence, and the explicit analyze endpoint. The external model call remains outside the database transaction.
 
 The complete evaluation command remains deferred as well. Its WBS 11 contract requires the baseline golden dataset, deterministic review policy, metrics, and regression thresholds; advertising a partial evaluator before those dependencies exist would give a misleading result.

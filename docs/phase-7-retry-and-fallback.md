@@ -58,9 +58,9 @@ Provider failures use `MODEL_CALL_FAILED` as the review reason while retaining t
 
 ## API behavior decision
 
-When the analyze endpoint and atomic persistence are implemented, a successfully persisted fallback will return a degraded successful response with HTTP `200`, `analysisStatus: "fallback"`, and `reviewRequired: true`. This means the analysis request was handled safely, not that AI analysis succeeded. Database/persistence failure will remain a non-2xx error and must never be reported as a persisted fallback.
+The analyze endpoint returns a successfully persisted fallback as a degraded successful response with HTTP `200`, `analysisStatus: "fallback"`, and `reviewRequired: true`. This means the analysis request was handled safely, not that AI analysis succeeded. Database/persistence failure remains a non-2xx error and is never reported as a persisted fallback.
 
-The endpoint and persistence are not connected in this phase. WBS 5.3 and 5.4 require the deterministic review policy and atomic database transaction, so WBS 6.3 and 6.4 remain partial until that path is complete.
+Phase 8 connects this result to deterministic review policy and atomic persistence. The analysis run and case routing status now commit together after all external model work is complete.
 
 ## Verification
 

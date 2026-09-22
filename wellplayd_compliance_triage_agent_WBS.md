@@ -859,7 +859,7 @@ POST /api/cases
 
 ---
 
-### WBS 3.4 — Implement case analysis endpoint `[ ]`
+### WBS 3.4 — Implement case analysis endpoint `[x]`
 
 **Priority:** P0  
 **Dependencies:** 3.3, WBS 5
@@ -1034,7 +1034,7 @@ Do not leak provider-specific response objects through services/controllers.
 
 ---
 
-### WBS 5.3 — Persist successful analysis run `[ ]`
+### WBS 5.3 — Persist successful analysis run `[x]`
 
 **Priority:** P0  
 **Dependencies:** 2.3, 5.1, 7.0
@@ -1051,7 +1051,7 @@ After review policy executes, persist:
 
 ---
 
-### WBS 5.4 — Persist analysis and case status atomically `[ ]`
+### WBS 5.4 — Persist analysis and case status atomically `[x]`
 
 **Priority:** P0  
 **Dependencies:** 2.2, 2.3, 5.3, 7.1
@@ -1112,7 +1112,7 @@ Create domain/application errors for at least:
 
 ---
 
-### WBS 6.3 — Implement safe fallback `[~]`
+### WBS 6.3 — Implement safe fallback `[x]`
 
 **Priority:** P0  
 **Dependencies:** 6.2, 1.3
@@ -1131,7 +1131,7 @@ Do **not** fabricate category, severity, or confidence values.
 
 ---
 
-### WBS 6.4 — Implement provider-error fallback `[~]`
+### WBS 6.4 — Implement provider-error fallback `[x]`
 
 **Priority:** P0  
 **Dependencies:** 6.1, 6.3
@@ -1152,7 +1152,7 @@ Document whether the API returns a degraded successful response or a non-2xx res
 
 ## WBS 7 — Deterministic Human-Review Policy
 
-### WBS 7.1 — Implement review policy function `[ ]`
+### WBS 7.1 — Implement review policy function `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2, 1.3
@@ -1175,7 +1175,7 @@ evaluateReviewPolicy(analysis, config): ReviewDecision
 
 ---
 
-### WBS 7.2 — Prevent model override of policy `[ ]`
+### WBS 7.2 — Prevent model override of policy `[x]`
 
 **Priority:** P0  
 **Dependencies:** 7.1
@@ -1199,7 +1199,7 @@ the application must still return `reviewRequired = true`.
 
 ---
 
-### WBS 7.3 — Persist review reasons `[ ]`
+### WBS 7.3 — Persist review reasons `[x]`
 
 **Priority:** P0  
 **Dependencies:** 7.1, 2.3
@@ -1660,7 +1660,7 @@ Test at minimum:
 
 ---
 
-### WBS 12.3 — Implement review-policy unit tests `[ ]`
+### WBS 12.3 — Implement review-policy unit tests `[x]`
 
 **Priority:** P0  
 **Dependencies:** 7.1, 12.1
@@ -2629,10 +2629,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 - [x] WBS 4.2 provider client
 - [x] WBS 4.3 versioned prompt
 - [x] WBS 5.1 analysis service
-- [ ] WBS 7.1 deterministic review policy
-- [ ] WBS 5.3 persist analysis
-- [ ] WBS 5.4 atomic persistence
-- [ ] WBS 3.4 analyze endpoint
+- [x] WBS 7.1 deterministic review policy
+- [x] WBS 5.3 persist analysis
+- [x] WBS 5.4 atomic persistence
+- [x] WBS 3.4 analyze endpoint
 
 **End-of-day checkpoint:** one synthetic case can travel end-to-end through API -> DB -> LLM -> validation -> policy -> DB -> API response.
 
@@ -2644,10 +2644,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 - [x] WBS 6.1 normalized errors
 - [x] WBS 6.2 one retry
-- [ ] WBS 6.3 malformed-output fallback
-- [ ] WBS 6.4 provider-error fallback
-- [ ] WBS 7.2 policy override test behavior
-- [ ] WBS 7.3 persisted review reasons
+- [x] WBS 6.3 malformed-output fallback
+- [x] WBS 6.4 provider-error fallback
+- [x] WBS 7.2 policy override test behavior
+- [x] WBS 7.3 persisted review reasons
 
 **Checkpoint:** deliberately broken fake model output cannot produce a normal automated result.
 
@@ -2655,7 +2655,7 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 - [ ] WBS 12.1 Vitest
 - [ ] WBS 12.2 schema tests
-- [ ] WBS 12.3 policy tests
+- [x] WBS 12.3 policy tests
 - [ ] WBS 12.4 fake LLM
 - [ ] WBS 12.5 retry/fallback tests
 - [ ] WBS 12.6 API integration tests

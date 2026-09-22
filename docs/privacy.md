@@ -16,6 +16,8 @@ The repository does **not** claim production readiness, legal approval, or GDPR 
 
 Database records still contain the submitted case description because persistence is part of the demonstration. Anyone running the project is responsible for keeping the database synthetic and appropriately isolated.
 
+Calling `POST /api/cases/:id/analyze` sends the stored synthetic case description to the configured external model provider. Creating or retrieving a case does not call a model. Do not use the analyze endpoint with real reports unless the deployment has completed the required privacy, security, contractual, and legal review.
+
 Provider settings are not a substitute for a privacy review. OpenAI and Gemini requests opt out of provider-side interaction storage where their APIs expose that control. Groq data retention, including Zero Data Retention, is configured in the Groq account rather than per request. No provider configuration in this demo is a GDPR-compliance claim.
 
 ## Requirements for a real deployment

@@ -4,7 +4,7 @@ A production-oriented LLM compliance triage demo focused on validated structured
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
 
-The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Behind that API, a provider-neutral analysis service converts OpenAI, Gemini, Groq, or fake-client results into locally validated typed analyses. The analyze endpoint remains intentionally deferred until review policy, persistence, and fallback behavior are complete.
+The HTTP API stores synthetic cases and can explicitly analyze a stored case through the configured OpenAI, Gemini, or Groq adapter. Model output is locally validated, retried at most once when appropriate, routed by deterministic application policy, and persisted atomically with the parent case status.
 
 ## LLM reliability layer
 
@@ -47,12 +47,13 @@ Groq retention controls, including Zero Data Retention, are account settings rat
 
 ## HTTP API
 
-| Method | Path             | Purpose                                                 |
-| ------ | ---------------- | ------------------------------------------------------- |
-| `GET`  | `/health`        | Process liveness                                        |
-| `GET`  | `/ready`         | PostgreSQL readiness                                    |
-| `POST` | `/api/cases`     | Validate and create a case without implicit AI analysis |
-| `GET`  | `/api/cases/:id` | Retrieve case metadata and business analysis history    |
+| Method | Path                     | Purpose                                                 |
+| ------ | ------------------------ | ------------------------------------------------------- |
+| `GET`  | `/health`                | Process liveness                                        |
+| `GET`  | `/ready`                 | PostgreSQL readiness                                    |
+| `POST` | `/api/cases`             | Validate and create a case without implicit AI analysis |
+| `POST` | `/api/cases/:id/analyze` | Analyze, route, and persist one immutable run           |
+| `GET`  | `/api/cases/:id`         | Retrieve case metadata and business analysis history    |
 
 Requests and responses carry an `X-Request-Id`. JSON request bodies are limited to `32kb`, and errors use a stable `{ "error": { ... } }` envelope.
 
@@ -73,6 +74,14 @@ curl -X POST http://localhost:3000/api/cases \
   -H "Content-Type: application/json" \
   -d '{"description":"A synthetic report containing enough detail for initial triage.","reporterType":"member","subjectRef":"subject_demo_10"}'
 ```
+
+Request analysis explicitly, replacing the example ID with the returned case ID:
+
+```bash
+curl -X POST http://localhost:3000/api/cases/<case-id>/analyze
+```
+
+This endpoint invokes the configured model and may consume provider quota. Use synthetic reports only.
 
 ## Quality checks
 
@@ -104,3 +113,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 5: Provider-Isolated LLM Layer](docs/phase-5-llm-layer.md)
 - [Phase 6: Validated Analysis Pipeline](docs/phase-6-analysis-pipeline.md)
 - [Phase 7: Retry, Failure Handling, and Safe Fallback](docs/phase-7-retry-and-fallback.md)
+- [Phase 8: Deterministic Human-Review Policy](docs/phase-8-human-review-policy.md)
