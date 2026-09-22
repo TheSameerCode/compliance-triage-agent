@@ -26,8 +26,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx scripts/seed.ts",
     "db:check": "tsx scripts/db-check.ts",
-    "llm:smoke": "tsx --env-file-if-exists=.env scripts/llm-smoke.ts",
-    "eval": "tsx evals/run.ts"
+    "llm:smoke": "tsx --env-file-if-exists=.env scripts/llm-smoke.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
