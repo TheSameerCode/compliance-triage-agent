@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { caseInputSchema } from '../domain/case.schemas.js';
 import type { CaseRepository } from '../repositories/case.repository.js';
+import type { CaseTriageService } from '../services/triage.service.js';
 import { HttpError } from './http-error.js';
 
 const caseIdSchema = z
@@ -19,7 +20,10 @@ function validationIssues(error: z.ZodError): { path: string; message: string }[
   }));
 }
 
-export function createCasesRouter(caseRepository: CaseRepository): Router {
+export function createCasesRouter(
+  caseRepository: CaseRepository,
+  triageService?: CaseTriageService,
+): Router {
   const router = Router();
 
   router.post('/', async (request, response) => {
@@ -38,6 +42,35 @@ export function createCasesRouter(caseRepository: CaseRepository): Router {
 
     request.log.info({ event: 'case.created', caseId: createdCase.id });
     response.location(`/api/cases/${createdCase.id}`).status(201).json({ data: createdCase });
+  });
+
+  router.post('/:id/analyze', async (request, response) => {
+    const parsedId = caseIdSchema.safeParse(request.params.id);
+
+    if (!parsedId.success) {
+      throw new HttpError(400, 'INVALID_CASE_ID', 'Case ID is invalid');
+    }
+
+    if (triageService === undefined) {
+      throw new HttpError(503, 'ANALYSIS_UNAVAILABLE', 'Case analysis is unavailable');
+    }
+
+    const result = await triageService.analyzeCase(parsedId.data);
+
+    if (result === null) {
+      throw new HttpError(404, 'CASE_NOT_FOUND', 'Case was not found');
+    }
+
+    request.log.info({
+      event: 'case.analyzed',
+      caseId: parsedId.data,
+      analysisRunId: result.analysisRunId,
+      analysisStatus: result.analysisStatus,
+      reviewRequired: result.reviewDecision.reviewRequired,
+      retryCount: result.retryCount,
+      ...(result.analysisStatus === 'fallback' ? { failureCode: result.failure.code } : {}),
+    });
+    response.status(200).json({ data: result });
   });
 
   router.get('/:id', async (request, response) => {

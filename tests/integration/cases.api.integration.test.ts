@@ -7,6 +7,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createPrismaClient } from '../../src/db/prisma.js';
 import { PrismaCaseRepository } from '../../src/repositories/prisma-case.repository.js';
+import type { ReliableAnalyzer } from '../../src/services/triage.service.js';
+import { TriageService } from '../../src/services/triage.service.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -29,6 +31,16 @@ interface CreatedCaseResponseBody {
 
 interface RetrievedCaseResponseBody {
   readonly data: { readonly analysisRuns: readonly Record<string, unknown>[] };
+}
+
+function createTriageService(reliableAnalyzer: ReliableAnalyzer, model = 'fake-model') {
+  return new TriageService({
+    repository: caseRepository,
+    reliableAnalyzer,
+    model,
+    promptVersion: 'triage-v1',
+    reviewPolicy: { confidenceThreshold: 0.75 },
+  });
 }
 
 describe('case API with PostgreSQL', () => {
@@ -128,5 +140,198 @@ describe('case API with PostgreSQL', () => {
     expect(body.data.analysisRuns[0]).not.toHaveProperty('model');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('promptVersion');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('latencyMs');
+  });
+
+  it('persists policy reasons and case routing atomically through the analysis endpoint', async () => {
+    const reliableAnalyzer: ReliableAnalyzer = {
+      analyze: () =>
+        Promise.resolve({
+          type: 'validated',
+          analysis: {
+            category: 'safeguarding',
+            severity: 'high',
+            summary: 'A neutral synthetic safeguarding summary.',
+            missingInformation: ['Event date'],
+            indicators: ['A safeguarding concern was reported.'],
+            confidence: 0.7,
+            modelSuggestsHumanReview: false,
+          },
+          retryCount: 1,
+          trace: {
+            model: 'fake-model',
+            promptVersion: 'triage-v1',
+            providerResponseId: 'response-integration-01',
+            latencyMs: 10,
+            usage: { inputTokens: 100, outputTokens: 40, totalTokens: 140 },
+          },
+        }),
+    };
+    const analysisApp = createApp({
+      caseRepository,
+      triageService: createTriageService(reliableAnalyzer),
+      logger: pino({ level: 'silent' }),
+    });
+    const createResponse = await request(analysisApp)
+      .post('/api/cases')
+      .send({
+        description: 'A synthetic safeguarding integration report with sufficient detail.',
+        reporterType: 'integration-test',
+        subjectRef: 'subject_phase8_policy',
+      })
+      .expect(201);
+    const caseId = responseBody<CreatedCaseResponseBody>(createResponse).data.id;
+    createdCaseIds.push(caseId);
+
+    const analysisResponse = await request(analysisApp)
+      .post(`/api/cases/${caseId}/analyze`)
+      .expect(200);
+    const analysisBody = responseBody<{
+      readonly data: {
+        readonly analysisRunId: string;
+        readonly caseStatus: string;
+        readonly reviewDecision: {
+          readonly reviewRequired: boolean;
+          readonly reviewReasons: readonly string[];
+        };
+      };
+    }>(analysisResponse);
+
+    expect(analysisBody.data).toMatchObject({
+      caseStatus: 'REVIEW_REQUIRED',
+      reviewDecision: {
+        reviewRequired: true,
+        reviewReasons: [
+          'SAFEGUARDING_CATEGORY',
+          'HIGH_SEVERITY',
+          'LOW_CONFIDENCE',
+          'MISSING_INFORMATION',
+        ],
+      },
+    });
+
+    const persistedCase = await prisma.case.findUniqueOrThrow({
+      where: { id: caseId },
+      include: { analysisRuns: true },
+    });
+    expect(persistedCase.status).toBe('REVIEW_REQUIRED');
+    expect(persistedCase.analysisRuns).toHaveLength(1);
+    expect(persistedCase.analysisRuns[0]).toMatchObject({
+      id: analysisBody.data.analysisRunId,
+      analysisStatus: 'completed',
+      reviewRequired: true,
+      retryCount: 1,
+      inputTokens: 100,
+      outputTokens: 40,
+    });
+    expect(persistedCase.analysisRuns[0]?.reviewReasons).toEqual(
+      analysisBody.data.reviewDecision.reviewReasons,
+    );
+
+    const retrievalResponse = await request(analysisApp).get(`/api/cases/${caseId}`).expect(200);
+    const retrievalBody = responseBody<RetrievedCaseResponseBody>(retrievalResponse);
+    expect(retrievalBody.data.analysisRuns[0]?.reviewReasons).toEqual(
+      analysisBody.data.reviewDecision.reviewReasons,
+    );
+  });
+
+  it('persists a provider fallback with mandatory review and no invented analysis', async () => {
+    const reliableAnalyzer: ReliableAnalyzer = {
+      analyze: () =>
+        Promise.resolve({
+          type: 'fallback',
+          analysisStatus: 'fallback',
+          analysis: null,
+          reviewDecision: {
+            reviewRequired: true,
+            reviewReasons: ['MODEL_CALL_FAILED'],
+          },
+          retryCount: 1,
+          failure: { code: 'TIMEOUT' },
+        }),
+    };
+    const analysisApp = createApp({
+      caseRepository,
+      triageService: createTriageService(reliableAnalyzer),
+      logger: pino({ level: 'silent' }),
+    });
+    const createdCase = await prisma.case.create({
+      data: {
+        description: 'A synthetic provider-fallback integration report.',
+        subjectRef: 'subject_phase8_fallback',
+      },
+    });
+    createdCaseIds.push(createdCase.id);
+
+    const response = await request(analysisApp)
+      .post(`/api/cases/${createdCase.id}/analyze`)
+      .expect(200);
+    const body = responseBody<{
+      readonly data: {
+        readonly analysisStatus: string;
+        readonly analysis: unknown;
+        readonly failure: { readonly code: string };
+        readonly reviewDecision: { readonly reviewReasons: readonly string[] };
+      };
+    }>(response);
+
+    expect(body.data).toMatchObject({
+      analysisStatus: 'fallback',
+      analysis: null,
+      failure: { code: 'TIMEOUT' },
+      reviewDecision: { reviewReasons: ['MODEL_CALL_FAILED'] },
+    });
+
+    const persistedCase = await prisma.case.findUniqueOrThrow({
+      where: { id: createdCase.id },
+      include: { analysisRuns: true },
+    });
+    expect(persistedCase.status).toBe('REVIEW_REQUIRED');
+    expect(persistedCase.analysisRuns[0]).toMatchObject({
+      analysisStatus: 'fallback',
+      category: null,
+      severity: null,
+      summary: null,
+      confidence: null,
+      reviewRequired: true,
+      reviewReasons: ['MODEL_CALL_FAILED'],
+    });
+  });
+
+  it('leaves case state unchanged when analysis-run persistence fails', async () => {
+    const reliableAnalyzer: ReliableAnalyzer = {
+      analyze: () =>
+        Promise.resolve({
+          type: 'fallback',
+          analysisStatus: 'fallback',
+          analysis: null,
+          reviewDecision: {
+            reviewRequired: true,
+            reviewReasons: ['MODEL_CALL_FAILED'],
+          },
+          retryCount: 0,
+          failure: { code: 'AUTHENTICATION_FAILED' },
+        }),
+    };
+    const analysisApp = createApp({
+      caseRepository,
+      triageService: createTriageService(reliableAnalyzer, 'x'.repeat(201)),
+      logger: pino({ level: 'silent' }),
+    });
+    const createdCase = await prisma.case.create({
+      data: {
+        description: 'A synthetic transaction rollback integration report.',
+        subjectRef: 'subject_phase8_rollback',
+      },
+    });
+    createdCaseIds.push(createdCase.id);
+
+    await request(analysisApp).post(`/api/cases/${createdCase.id}/analyze`).expect(500);
+
+    const persistedCase = await prisma.case.findUniqueOrThrow({
+      where: { id: createdCase.id },
+      include: { analysisRuns: true },
+    });
+    expect(persistedCase.status).toBe('NEW');
+    expect(persistedCase.analysisRuns).toHaveLength(0);
   });
 });

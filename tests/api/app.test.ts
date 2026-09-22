@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createApp } from '../../src/app.js';
 import type { CaseRecord, CaseRepository } from '../../src/repositories/case.repository.js';
+import type { CaseTriageService } from '../../src/services/triage.service.js';
 
 const createdAt = new Date('2026-09-20T10:00:00.000Z');
 
@@ -205,6 +206,120 @@ describe('HTTP application', () => {
     expect(body.data.analysisRuns[0]).not.toHaveProperty('model');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('inputTokens');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('estimatedCost');
+  });
+
+  it('returns completed analysis with the application review decision', async () => {
+    const analyzeCase = vi.fn<CaseTriageService['analyzeCase']>().mockResolvedValue({
+      analysisRunId: 'run_test_01',
+      caseStatus: 'REVIEW_REQUIRED',
+      analysisStatus: 'completed',
+      analysis: {
+        category: 'safeguarding',
+        severity: 'high',
+        summary: 'Neutral synthetic summary.',
+        missingInformation: [],
+        indicators: ['Safeguarding concern'],
+        confidence: 0.99,
+        modelSuggestsHumanReview: false,
+      },
+      reviewDecision: {
+        reviewRequired: true,
+        reviewReasons: ['SAFEGUARDING_CATEGORY', 'HIGH_SEVERITY'],
+      },
+      retryCount: 0,
+      createdAt,
+    });
+    const app = createApp({
+      caseRepository: createRepository(),
+      triageService: { analyzeCase },
+      logger: createSilentLogger(),
+    });
+
+    const response = await request(app).post('/api/cases/case_test_01/analyze').expect(200);
+
+    expect(responseBody<unknown>(response)).toEqual({
+      data: {
+        analysisRunId: 'run_test_01',
+        caseStatus: 'REVIEW_REQUIRED',
+        analysisStatus: 'completed',
+        analysis: {
+          category: 'safeguarding',
+          severity: 'high',
+          summary: 'Neutral synthetic summary.',
+          missingInformation: [],
+          indicators: ['Safeguarding concern'],
+          confidence: 0.99,
+          modelSuggestsHumanReview: false,
+        },
+        reviewDecision: {
+          reviewRequired: true,
+          reviewReasons: ['SAFEGUARDING_CATEGORY', 'HIGH_SEVERITY'],
+        },
+        retryCount: 0,
+        createdAt: createdAt.toISOString(),
+      },
+    });
+    expect(analyzeCase).toHaveBeenCalledWith('case_test_01');
+  });
+
+  it('returns a degraded successful response for a persisted provider fallback', async () => {
+    const analyzeCase = vi.fn<CaseTriageService['analyzeCase']>().mockResolvedValue({
+      analysisRunId: 'run_fallback_01',
+      caseStatus: 'REVIEW_REQUIRED',
+      analysisStatus: 'fallback',
+      analysis: null,
+      reviewDecision: {
+        reviewRequired: true,
+        reviewReasons: ['MODEL_CALL_FAILED'],
+      },
+      retryCount: 1,
+      failure: { code: 'TIMEOUT' },
+      createdAt,
+    });
+    const app = createApp({
+      caseRepository: createRepository(),
+      triageService: { analyzeCase },
+      logger: createSilentLogger(),
+    });
+
+    const response = await request(app).post('/api/cases/case_test_01/analyze').expect(200);
+    const body = responseBody<{
+      readonly data: {
+        readonly analysis: unknown;
+        readonly analysisStatus: string;
+        readonly reviewDecision: { readonly reviewRequired: boolean };
+        readonly failure: { readonly code: string };
+      };
+    }>(response);
+
+    expect(body.data).toMatchObject({
+      analysisStatus: 'fallback',
+      analysis: null,
+      reviewDecision: { reviewRequired: true },
+      failure: { code: 'TIMEOUT' },
+    });
+  });
+
+  it('returns controlled analysis errors for unknown cases or missing service wiring', async () => {
+    const missingCaseApp = createApp({
+      caseRepository: createRepository(),
+      triageService: { analyzeCase: vi.fn().mockResolvedValue(null) },
+      logger: createSilentLogger(),
+    });
+    const unavailableApp = createApp({
+      caseRepository: createRepository(),
+      logger: createSilentLogger(),
+    });
+
+    const missing = await request(missingCaseApp)
+      .post('/api/cases/unknown_case/analyze')
+      .expect(404);
+    const unavailable = await request(unavailableApp)
+      .post('/api/cases/case_test_01/analyze')
+      .expect(503);
+
+    expect(responseBody<ErrorResponseBody>(missing).error.code).toBe('CASE_NOT_FOUND');
+    expect(responseBody<ErrorResponseBody>(unavailable).error.code).toBe('ANALYSIS_UNAVAILABLE');
   });
 
   it('returns structured errors for missing cases and unexpected failures', async () => {

@@ -30,4 +30,14 @@ describe('loadLLMEnvironment', () => {
       }).LLM_PROVIDER,
     ).toBe('groq');
   });
+
+  it('rejects a model identifier that cannot be persisted', () => {
+    expect(() =>
+      loadLLMEnvironment({
+        LLM_PROVIDER: 'groq',
+        LLM_MODEL: 'x'.repeat(201),
+        LLM_API_KEY: 'test-key-not-real',
+      }),
+    ).toThrow(/LLM_MODEL/u);
+  });
 });

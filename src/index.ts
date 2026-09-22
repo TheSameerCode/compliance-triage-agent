@@ -2,15 +2,41 @@ import { createServer } from 'node:http';
 
 import { createApp } from './app.js';
 import { loadEnvironment } from './config/env.js';
+import { loadLLMEnvironment } from './config/llm-env.js';
 import { createPrismaClient } from './db/prisma.js';
+import { createLLMClient } from './llm/create-llm-client.js';
+import { TRIAGE_PROMPT_VERSION } from './llm/prompts/index.js';
 import { createLogger } from './logging/logger.js';
 import { PrismaCaseRepository } from './repositories/prisma-case.repository.js';
+import { AnalysisService } from './services/analysis.service.js';
+import { ReliableAnalysisService } from './services/reliable-analysis.service.js';
+import { TriageService } from './services/triage.service.js';
 
 const environment = loadEnvironment();
+const llmEnvironment = loadLLMEnvironment();
 const logger = createLogger(environment.LOG_LEVEL);
 const prisma = createPrismaClient(environment.DATABASE_URL);
 const caseRepository = new PrismaCaseRepository(prisma);
-const app = createApp({ caseRepository, logger });
+const llmClient = createLLMClient({
+  provider: llmEnvironment.LLM_PROVIDER,
+  model: llmEnvironment.LLM_MODEL,
+  apiKey: llmEnvironment.LLM_API_KEY,
+});
+const analysisService = new AnalysisService({ llmClient });
+const reliableAnalysisService = new ReliableAnalysisService({
+  analysisRunner: analysisService,
+  maxRetries: environment.MAX_LLM_RETRIES,
+});
+const triageService = new TriageService({
+  repository: caseRepository,
+  reliableAnalyzer: reliableAnalysisService,
+  model: llmEnvironment.LLM_MODEL,
+  promptVersion: TRIAGE_PROMPT_VERSION,
+  reviewPolicy: {
+    confidenceThreshold: environment.HUMAN_REVIEW_CONFIDENCE_THRESHOLD,
+  },
+});
+const app = createApp({ caseRepository, logger, triageService });
 const server = createServer(app);
 
 server.listen(environment.PORT, () => {

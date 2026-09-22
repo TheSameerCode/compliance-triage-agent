@@ -6,10 +6,12 @@ import { createHealthRouter } from './api/health.routes.js';
 import { HttpError } from './api/http-error.js';
 import { requestContext } from './api/request-context.js';
 import type { CaseRepository } from './repositories/case.repository.js';
+import type { CaseTriageService } from './services/triage.service.js';
 
 export interface AppDependencies {
   readonly caseRepository: CaseRepository;
   readonly logger: Logger;
+  readonly triageService?: CaseTriageService;
 }
 
 function hasErrorType(error: unknown, type: string): boolean {
@@ -21,14 +23,14 @@ function hasErrorType(error: unknown, type: string): boolean {
   );
 }
 
-export function createApp({ caseRepository, logger }: AppDependencies): Express {
+export function createApp({ caseRepository, logger, triageService }: AppDependencies): Express {
   const app = express();
 
   app.disable('x-powered-by');
   app.use(requestContext(logger));
   app.use(express.json({ limit: '32kb' }));
   app.use(createHealthRouter(caseRepository));
-  app.use('/api/cases', createCasesRouter(caseRepository));
+  app.use('/api/cases', createCasesRouter(caseRepository, triageService));
 
   const notFoundHandler: RequestHandler = (request, _response, next) => {
     next(new HttpError(404, 'ROUTE_NOT_FOUND', `No route for ${request.method}`));
