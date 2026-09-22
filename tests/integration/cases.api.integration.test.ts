@@ -7,8 +7,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { createPrismaClient } from '../../src/db/prisma.js';
 import { PrismaCaseRepository } from '../../src/repositories/prisma-case.repository.js';
+import { AnalysisService } from '../../src/services/analysis.service.js';
+import { ReliableAnalysisService } from '../../src/services/reliable-analysis.service.js';
 import type { ReliableAnalyzer } from '../../src/services/triage.service.js';
 import { TriageService } from '../../src/services/triage.service.js';
+import { FakeLLMClient, type FakeLLMScenario } from '../support/fake-llm-client.js';
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -43,6 +46,18 @@ function createTriageService(reliableAnalyzer: ReliableAnalyzer, model = 'fake-m
   });
 }
 
+function createTriageServiceWithFake(scenario: FakeLLMScenario): {
+  readonly client: FakeLLMClient;
+  readonly service: TriageService;
+} {
+  const client = new FakeLLMClient({ scenario });
+  const reliableAnalyzer = new ReliableAnalysisService({
+    analysisRunner: new AnalysisService({ llmClient: client, now: () => 10 }),
+  });
+
+  return { client, service: createTriageService(reliableAnalyzer) };
+}
+
 describe('case API with PostgreSQL', () => {
   beforeAll(async () => {
     await caseRepository.checkConnection();
@@ -60,6 +75,37 @@ describe('case API with PostgreSQL', () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
+  });
+
+  it('serves the health boundary with the real repository wired', async () => {
+    await request(app).get('/health').expect(200, { status: 'ok' });
+    await request(app).get('/ready').expect(200, { status: 'ready' });
+  });
+
+  it('rejects invalid input without persisting a case', async () => {
+    const subjectRef = `subject_phase13_invalid_${randomUUID()}`;
+
+    await request(app)
+      .post('/api/cases')
+      .send({ description: 'too short', subjectRef })
+      .expect(400);
+
+    await expect(prisma.case.count({ where: { subjectRef } })).resolves.toBe(0);
+  });
+
+  it('returns 404 for analysis of an unknown case without persisting a run', async () => {
+    const missingCaseId = `missing_${randomUUID()}`;
+    const { service } = createTriageServiceWithFake({ type: 'valid' });
+    const analysisApp = createApp({
+      caseRepository,
+      triageService: service,
+      logger: pino({ level: 'silent' }),
+    });
+    const runCountBefore = await prisma.analysisRun.count();
+
+    await request(analysisApp).post(`/api/cases/${missingCaseId}/analyze`).expect(404);
+
+    await expect(prisma.analysisRun.count()).resolves.toBe(runCountBefore);
   });
 
   it('persists a validated case created through HTTP', async () => {
@@ -143,33 +189,21 @@ describe('case API with PostgreSQL', () => {
   });
 
   it('persists policy reasons and case routing atomically through the analysis endpoint', async () => {
-    const reliableAnalyzer: ReliableAnalyzer = {
-      analyze: () =>
-        Promise.resolve({
-          type: 'validated',
-          analysis: {
-            category: 'safeguarding',
-            severity: 'high',
-            summary: 'A neutral synthetic safeguarding summary.',
-            missingInformation: ['Event date'],
-            indicators: ['A safeguarding concern was reported.'],
-            confidence: 0.7,
-            modelSuggestsHumanReview: false,
-          },
-          retryCount: 1,
-          toolNames: ['get_previous_cases'],
-          trace: {
-            model: 'fake-model',
-            promptVersion: 'triage-v1',
-            providerResponseId: 'response-integration-01',
-            latencyMs: 10,
-            usage: { inputTokens: 100, outputTokens: 40, totalTokens: 140 },
-          },
-        }),
-    };
+    const { client, service } = createTriageServiceWithFake({
+      type: 'invalid_then_valid',
+      analysis: {
+        category: 'safeguarding',
+        severity: 'high',
+        summary: 'A neutral synthetic safeguarding summary.',
+        missingInformation: ['Event date'],
+        indicators: ['A safeguarding concern was reported.'],
+        confidence: 0.7,
+        modelSuggestsHumanReview: false,
+      },
+    });
     const analysisApp = createApp({
       caseRepository,
-      triageService: createTriageService(reliableAnalyzer),
+      triageService: service,
       logger: pino({ level: 'silent' }),
     });
     const createResponse = await request(analysisApp)
@@ -225,9 +259,10 @@ describe('case API with PostgreSQL', () => {
       retryCount: 1,
       inputTokens: 100,
       outputTokens: 40,
-      toolNames: ['get_previous_cases'],
+      toolNames: [],
       estimatedCost: null,
     });
+    expect(client.callCount).toBe(2);
     expect(persistedCase.analysisRuns[0]?.latencyMs).toBeGreaterThanOrEqual(0);
     expect(persistedCase.analysisRuns[0]?.reviewReasons).toEqual(
       analysisBody.data.reviewDecision.reviewReasons,
@@ -241,30 +276,16 @@ describe('case API with PostgreSQL', () => {
     expect(retrievalBody.data.analysisRuns[0]).not.toHaveProperty('toolNames');
   });
 
-  it('persists a provider fallback with mandatory review and no invented analysis', async () => {
-    const reliableAnalyzer: ReliableAnalyzer = {
-      analyze: () =>
-        Promise.resolve({
-          type: 'fallback',
-          analysisStatus: 'fallback',
-          analysis: null,
-          reviewDecision: {
-            reviewRequired: true,
-            reviewReasons: ['MODEL_CALL_FAILED'],
-          },
-          retryCount: 1,
-          toolNames: ['get_previous_cases'],
-          failure: { code: 'TIMEOUT' },
-        }),
-    };
+  it('persists an invalid-output fallback with mandatory review and no invented analysis', async () => {
+    const { client, service } = createTriageServiceWithFake({ type: 'repeated_invalid' });
     const analysisApp = createApp({
       caseRepository,
-      triageService: createTriageService(reliableAnalyzer),
+      triageService: service,
       logger: pino({ level: 'silent' }),
     });
     const createdCase = await prisma.case.create({
       data: {
-        description: 'A synthetic provider-fallback integration report.',
+        description: 'A synthetic invalid-output fallback integration report.',
         subjectRef: 'subject_phase8_fallback',
       },
     });
@@ -285,8 +306,8 @@ describe('case API with PostgreSQL', () => {
     expect(body.data).toMatchObject({
       analysisStatus: 'fallback',
       analysis: null,
-      failure: { code: 'TIMEOUT' },
-      reviewDecision: { reviewReasons: ['MODEL_CALL_FAILED'] },
+      failure: { code: 'MODEL_OUTPUT_INVALID' },
+      reviewDecision: { reviewReasons: ['MODEL_OUTPUT_INVALID'] },
     });
 
     const persistedCase = await prisma.case.findUniqueOrThrow({
@@ -303,13 +324,89 @@ describe('case API with PostgreSQL', () => {
       summary: null,
       confidence: null,
       reviewRequired: true,
-      reviewReasons: ['MODEL_CALL_FAILED'],
-      toolNames: ['get_previous_cases'],
-      inputTokens: null,
-      outputTokens: null,
+      reviewReasons: ['MODEL_OUTPUT_INVALID'],
+      toolNames: [],
+      inputTokens: 100,
+      outputTokens: 40,
       estimatedCost: null,
     });
     expect(persistedCase.analysisRuns[0]?.latencyMs).toBeGreaterThanOrEqual(0);
+    expect(client.callCount).toBe(2);
+  });
+
+  it('lists policy-routed cases in the review queue and excludes analyzed controls', async () => {
+    const reviewCase = await prisma.case.create({
+      data: {
+        description: 'A synthetic high-severity report for review-queue testing.',
+        subjectRef: `subject_phase13_review_${randomUUID()}`,
+      },
+    });
+    const controlCase = await prisma.case.create({
+      data: {
+        description: 'A synthetic low-risk control report for review-queue testing.',
+        subjectRef: `subject_phase13_control_${randomUUID()}`,
+      },
+    });
+    createdCaseIds.push(reviewCase.id, controlCase.id);
+    const reviewTriage = createTriageServiceWithFake({
+      type: 'valid',
+      analysis: {
+        category: 'other',
+        severity: 'high',
+        summary: 'A neutral synthetic high-severity summary.',
+        missingInformation: [],
+        indicators: ['A high-severity concern was reported.'],
+        confidence: 0.95,
+        modelSuggestsHumanReview: false,
+      },
+    });
+    const controlTriage = createTriageServiceWithFake({
+      type: 'valid',
+      analysis: {
+        category: 'other',
+        severity: 'low',
+        summary: 'A neutral synthetic control summary.',
+        missingInformation: [],
+        indicators: ['No policy trigger was found.'],
+        confidence: 0.95,
+        modelSuggestsHumanReview: false,
+      },
+    });
+
+    await request(
+      createApp({
+        caseRepository,
+        triageService: reviewTriage.service,
+        logger: pino({ level: 'silent' }),
+      }),
+    )
+      .post(`/api/cases/${reviewCase.id}/analyze`)
+      .expect(200);
+    await request(
+      createApp({
+        caseRepository,
+        triageService: controlTriage.service,
+        logger: pino({ level: 'silent' }),
+      }),
+    )
+      .post(`/api/cases/${controlCase.id}/analyze`)
+      .expect(200);
+
+    const response = await request(app).get('/api/reviews?status=required').expect(200);
+    const body = responseBody<{
+      readonly data: readonly { readonly id: string; readonly status: string }[];
+    }>(response);
+
+    expect(body.data).toContainEqual(
+      expect.objectContaining({ id: reviewCase.id, status: 'REVIEW_REQUIRED' }),
+    );
+    expect(body.data.map(({ id }) => id)).not.toContain(controlCase.id);
+    expect(body.data.every(({ status }) => status === 'REVIEW_REQUIRED')).toBe(true);
+    await expect(
+      prisma.case.findUniqueOrThrow({ where: { id: controlCase.id } }),
+    ).resolves.toMatchObject({
+      status: 'ANALYZED',
+    });
   });
 
   it('leaves case state unchanged when analysis-run persistence fails', async () => {

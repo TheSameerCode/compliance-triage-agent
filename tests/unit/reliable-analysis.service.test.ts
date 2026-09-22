@@ -5,6 +5,7 @@ import { analysisOutcomeSchema } from '../../src/domain/decision.schemas.js';
 import { DatabaseFailureError, ToolExecutionError } from '../../src/errors/application-error.js';
 import { LLMClientError } from '../../src/llm/llm-errors.js';
 import {
+  AnalysisService,
   AnalysisOutputValidationError,
   type AnalysisExecution,
   type AnalysisTrace,
@@ -13,6 +14,7 @@ import {
   type AnalysisRunner,
   ReliableAnalysisService,
 } from '../../src/services/reliable-analysis.service.js';
+import { FakeLLMClient, type FakeLLMScenario } from '../support/fake-llm-client.js';
 
 const syntheticCase = {
   description: 'A synthetic report with enough detail for reliability testing.',
@@ -77,31 +79,54 @@ function createRunner(outcomes: readonly (AnalysisExecution | Error)[]): {
   return { runner: { analyze }, analyze };
 }
 
+function createServiceWithFake(scenario: FakeLLMScenario): {
+  readonly client: FakeLLMClient;
+  readonly service: ReliableAnalysisService;
+} {
+  const client = new FakeLLMClient({ scenario });
+  const analysisRunner = new AnalysisService({ llmClient: client, now: () => 10 });
+
+  return {
+    client,
+    service: new ReliableAnalysisService({ analysisRunner }),
+  };
+}
+
 describe('ReliableAnalysisService', () => {
+  it('returns a valid first response with exactly zero retries', async () => {
+    const { client, service } = createServiceWithFake({ type: 'valid', analysis: validAnalysis });
+
+    await expect(service.analyze(syntheticCase)).resolves.toMatchObject({
+      type: 'validated',
+      analysis: validAnalysis,
+      retryCount: 0,
+    });
+    expect(client.callCount).toBe(1);
+  });
+
   it('retries invalid output once and returns a successful typed analysis', async () => {
-    const { runner, analyze } = createRunner([invalidOutput('response-invalid'), validExecution()]);
-    const service = new ReliableAnalysisService({ analysisRunner: runner });
+    const { client, service } = createServiceWithFake({
+      type: 'invalid_then_valid',
+      analysis: validAnalysis,
+    });
 
     const result = await service.analyze(syntheticCase);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: 'validated',
       analysis: validAnalysis,
-      trace: createTrace('response-valid'),
       retryCount: 1,
       toolNames: [],
     });
-    expect(analyze).toHaveBeenCalledTimes(2);
+    expect(client.callCount).toBe(2);
   });
 
   it('returns a fail-closed fallback after repeated invalid output', async () => {
-    const lastError = invalidOutput('response-invalid-02');
-    const { runner, analyze } = createRunner([invalidOutput('response-invalid-01'), lastError]);
-    const service = new ReliableAnalysisService({ analysisRunner: runner });
+    const { client, service } = createServiceWithFake({ type: 'repeated_invalid' });
 
     const result = await service.analyze(syntheticCase);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       type: 'fallback',
       analysisStatus: 'fallback',
       analysis: null,
@@ -112,9 +137,8 @@ describe('ReliableAnalysisService', () => {
       retryCount: 1,
       toolNames: [],
       failure: { code: 'MODEL_OUTPUT_INVALID' },
-      lastTrace: lastError.trace,
     });
-    expect(analyze).toHaveBeenCalledTimes(2);
+    expect(client.callCount).toBe(2);
     if (result.type !== 'fallback') {
       throw new Error('Expected a fallback result');
     }
@@ -197,8 +221,11 @@ describe('ReliableAnalysisService', () => {
   });
 
   it('does not retry a non-retryable provider failure', async () => {
-    const { runner, analyze } = createRunner([new LLMClientError('AUTHENTICATION_FAILED', false)]);
-    const service = new ReliableAnalysisService({ analysisRunner: runner });
+    const { client, service } = createServiceWithFake({
+      type: 'provider_error',
+      code: 'AUTHENTICATION_FAILED',
+      retryable: false,
+    });
 
     await expect(service.analyze(syntheticCase)).resolves.toMatchObject({
       type: 'fallback',
@@ -209,7 +236,7 @@ describe('ReliableAnalysisService', () => {
         reviewReasons: ['MODEL_CALL_FAILED'],
       },
     });
-    expect(analyze).toHaveBeenCalledTimes(1);
+    expect(client.callCount).toBe(1);
   });
 
   it.each([new DatabaseFailureError(), new ToolExecutionError()])(
