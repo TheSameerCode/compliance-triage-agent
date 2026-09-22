@@ -14,6 +14,7 @@ import type {
   CaseRecord,
   CaseRepository,
   CreatedCaseRecord,
+  ReviewQueueRecord,
 } from './case.repository.js';
 
 const stringListSchema = z.array(z.string());
@@ -205,5 +206,23 @@ export class PrismaCaseRepository
         createdAt: run.createdAt,
       })),
     };
+  }
+
+  async findRequiredReviews(): Promise<readonly ReviewQueueRecord[]> {
+    try {
+      const records = await this.prisma.case.findMany({
+        where: { status: 'REVIEW_REQUIRED' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return records.map((record) => ({ ...record, status: 'REVIEW_REQUIRED' }));
+    } catch (error) {
+      throw new DatabaseFailureError({ cause: error });
+    }
   }
 }

@@ -16,6 +16,7 @@ function createRepository(overrides: Partial<CaseRepository> = {}): CaseReposito
     checkConnection: vi.fn().mockResolvedValue(undefined),
     create: vi.fn().mockResolvedValue({ id: 'case_test_01', status: 'NEW', createdAt }),
     findById: vi.fn().mockResolvedValue(null),
+    findRequiredReviews: vi.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
@@ -226,6 +227,39 @@ describe('HTTP application', () => {
     expect(body.data.analysisRuns[0]).not.toHaveProperty('model');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('inputTokens');
     expect(body.data.analysisRuns[0]).not.toHaveProperty('estimatedCost');
+  });
+
+  it('returns only the minimized required-review queue for an explicit status', async () => {
+    const findRequiredReviews = vi.fn<CaseRepository['findRequiredReviews']>().mockResolvedValue([
+      {
+        id: 'case_review_01',
+        status: 'REVIEW_REQUIRED',
+        createdAt,
+        updatedAt: new Date('2026-09-20T10:05:00.000Z'),
+      },
+    ]);
+    const app = createApp({
+      caseRepository: createRepository({ findRequiredReviews }),
+      logger: createSilentLogger(),
+    });
+
+    const response = await request(app).get('/api/reviews?status=required').expect(200);
+
+    expect(responseBody<unknown>(response)).toEqual({
+      data: [
+        {
+          id: 'case_review_01',
+          status: 'REVIEW_REQUIRED',
+          createdAt: createdAt.toISOString(),
+          updatedAt: '2026-09-20T10:05:00.000Z',
+        },
+      ],
+    });
+    expect(findRequiredReviews).toHaveBeenCalledOnce();
+    expect(JSON.stringify(response.body)).not.toContain('description');
+
+    const invalid = await request(app).get('/api/reviews?status=all').expect(400);
+    expect(responseBody<ErrorResponseBody>(invalid).error.code).toBe('INVALID_REVIEW_STATUS');
   });
 
   it('returns completed analysis with the application review decision', async () => {

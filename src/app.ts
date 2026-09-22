@@ -5,6 +5,7 @@ import { createCasesRouter } from './api/cases.routes.js';
 import { createHealthRouter } from './api/health.routes.js';
 import { HttpError } from './api/http-error.js';
 import { requestContext } from './api/request-context.js';
+import { createReviewsRouter } from './api/reviews.routes.js';
 import { DatabaseFailureError, ToolExecutionError } from './errors/application-error.js';
 import type { CaseRepository } from './repositories/case.repository.js';
 import type { CaseTriageService } from './services/triage.service.js';
@@ -32,6 +33,7 @@ export function createApp({ caseRepository, logger, triageService }: AppDependen
   app.use(express.json({ limit: '32kb' }));
   app.use(createHealthRouter(caseRepository));
   app.use('/api/cases', createCasesRouter(caseRepository, triageService));
+  app.use('/api/reviews', createReviewsRouter(caseRepository));
 
   const notFoundHandler: RequestHandler = (request, _response, next) => {
     next(new HttpError(404, 'ROUTE_NOT_FOUND', `No route for ${request.method}`));

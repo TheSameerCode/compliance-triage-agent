@@ -36,8 +36,16 @@ export interface CaseRecord extends CreatedCaseRecord {
   readonly analysisRuns: readonly AnalysisRunRecord[];
 }
 
+export interface ReviewQueueRecord {
+  readonly id: string;
+  readonly status: 'REVIEW_REQUIRED';
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
 export interface CaseRepository {
   checkConnection(): Promise<void>;
   create(input: CaseInput): Promise<CreatedCaseRecord>;
   findById(id: string): Promise<CaseRecord | null>;
+  findRequiredReviews(): Promise<readonly ReviewQueueRecord[]>;
 }
