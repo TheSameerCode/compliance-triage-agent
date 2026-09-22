@@ -35,7 +35,7 @@ export class DatabaseFailureError extends ApplicationError<'DATABASE_FAILURE'> {
     super(
       'DatabaseFailureError',
       'DATABASE_FAILURE',
-      'The analysis result could not be persisted',
+      'The database operation failed',
       false,
       options,
     );

@@ -46,7 +46,7 @@ describe('normalized application errors', () => {
     const cause = new Error('postgresql://user:secret@example.test/private');
     const error = new DatabaseFailureError({ cause });
 
-    expect(error.message).toBe('The analysis result could not be persisted');
+    expect(error.message).toBe('The database operation failed');
     expect(JSON.stringify(error)).not.toContain('secret');
   });
 });

@@ -1,4 +1,5 @@
 import type { CaseInput } from '../domain/case.schemas.js';
+import type { ReviewReason } from '../domain/decision.schemas.js';
 
 export type CaseStatus = 'NEW' | 'ANALYZED' | 'REVIEW_REQUIRED';
 export type AnalysisStatus = 'completed' | 'fallback';
@@ -23,7 +24,7 @@ export interface AnalysisRunRecord {
   readonly indicators: readonly string[];
   readonly modelSuggestsHumanReview: boolean | null;
   readonly reviewRequired: boolean;
-  readonly reviewReasons: readonly string[];
+  readonly reviewReasons: readonly ReviewReason[];
   readonly createdAt: Date;
 }
 
