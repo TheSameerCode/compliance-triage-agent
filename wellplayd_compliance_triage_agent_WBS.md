@@ -923,7 +923,7 @@ GET /api/reviews?status=required
 
 ## WBS 4 — LLM Abstraction and Prompt Versioning
 
-### WBS 4.1 — Define `LLMClient` interface `[ ]`
+### WBS 4.1 — Define `LLMClient` interface `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2
@@ -942,7 +942,7 @@ GET /api/reviews?status=required
 
 ---
 
-### WBS 4.2 — Implement provider client `[ ]`
+### WBS 4.2 — Implement provider client `[~]`
 
 **Priority:** P0  
 **Dependencies:** 4.1, 0.4
@@ -960,7 +960,7 @@ GET /api/reviews?status=required
 
 ---
 
-### WBS 4.3 — Create versioned triage prompt `[ ]`
+### WBS 4.3 — Create versioned triage prompt `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2
@@ -981,7 +981,7 @@ GET /api/reviews?status=required
 
 ---
 
-### WBS 4.4 — Add prompt-injection resistance instructions `[ ]`
+### WBS 4.4 — Add prompt-injection resistance instructions `[~]`
 
 **Priority:** P1  
 **Dependencies:** 4.3

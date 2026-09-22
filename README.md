@@ -4,7 +4,23 @@ A production-oriented LLM compliance triage demo focused on validated structured
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
 
-The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. AI analysis will be added in a later phase.
+The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. A provider-isolated OpenAI Responses API adapter and versioned triage prompt are available for the upcoming analysis pipeline.
+
+## LLM reliability layer
+
+- Application code depends on a local `LLMClient` contract rather than provider response objects.
+- The OpenAI adapter requests strict structured output with the existing Zod analysis schema.
+- Provider requests use `store: false`, capture token usage, and normalize failures into application error codes.
+- Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
+- `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
+
+The adapter is deterministic-testable without network access. To run the optional live smoke check, set `LLM_MODEL` and `LLM_API_KEY` locally, use a synthetic report only, and run:
+
+```bash
+npm run llm:smoke
+```
+
+The command prints only model, prompt-version, result-type, and usage metadata—not the report or model output. Never commit or paste an API key into source, documentation, issues, or chat.
 
 ## HTTP API
 
@@ -62,3 +78,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 1: Engineering Foundation](docs/phase-1-engineering-foundation.md)
 - [Reliability and Safety Invariants](docs/reliability.md)
 - [Privacy and Data Protection](docs/privacy.md)
+- [Phase 5: Provider-Isolated LLM Layer](docs/phase-5-llm-layer.md)
