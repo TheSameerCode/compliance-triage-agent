@@ -104,6 +104,7 @@ export class GroqLLMClient implements LLMClient {
 
   async analyze(request: LLMAnalysisRequest): Promise<LLMResult> {
     try {
+      const continuation = request.toolContinuation;
       const schema = z.toJSONSchema(caseAnalysisSchema);
       const tools = request.tools?.map((tool) => ({
         type: 'function' as const,
@@ -113,25 +114,47 @@ export class GroqLLMClient implements LLMClient {
           parameters: { ...tool.parameters },
         },
       }));
-      const hasTools = tools !== undefined && tools.length > 0;
+      const hasTools = continuation === undefined && tools !== undefined && tools.length > 0;
       const schemaInstruction = hasTools
         ? `If no tool is needed, return only JSON matching this schema: ${JSON.stringify(schema)}`
         : undefined;
+      const messages = [
+        {
+          role: 'system' as const,
+          content:
+            schemaInstruction === undefined
+              ? request.systemPrompt
+              : `${request.systemPrompt}\n\n${schemaInstruction}`,
+        },
+        {
+          role: 'user' as const,
+          content: JSON.stringify({ report: request.caseInput }),
+        },
+        ...(continuation === undefined
+          ? []
+          : [
+              {
+                role: 'assistant' as const,
+                content: null,
+                tool_calls: continuation.toolCalls.map((call) => ({
+                  id: call.id,
+                  type: 'function' as const,
+                  function: {
+                    name: call.name,
+                    arguments: JSON.stringify(call.arguments),
+                  },
+                })),
+              },
+              ...continuation.toolResults.map((result) => ({
+                role: 'tool' as const,
+                tool_call_id: result.callId,
+                content: JSON.stringify(result.output),
+              })),
+            ]),
+      ];
       const response = await this.client.chat.completions.create({
         model: this.model,
-        messages: [
-          {
-            role: 'system',
-            content:
-              schemaInstruction === undefined
-                ? request.systemPrompt
-                : `${request.systemPrompt}\n\n${schemaInstruction}`,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({ report: request.caseInput }),
-          },
-        ],
+        messages,
         max_completion_tokens: MAX_OUTPUT_TOKENS,
         temperature: 0,
         response_format: hasTools

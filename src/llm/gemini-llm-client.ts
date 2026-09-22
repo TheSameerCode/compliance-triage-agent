@@ -130,6 +130,7 @@ export class GeminiLLMClient implements LLMClient {
 
   async analyze(request: LLMAnalysisRequest): Promise<LLMResult> {
     try {
+      const continuation = request.toolContinuation;
       const tools = request.tools?.map((tool) => ({
         type: 'function' as const,
         name: tool.name,
@@ -140,7 +141,18 @@ export class GeminiLLMClient implements LLMClient {
         {
           model: this.model,
           system_instruction: request.systemPrompt,
-          input: JSON.stringify({ report: request.caseInput }),
+          input:
+            continuation === undefined
+              ? JSON.stringify({ report: request.caseInput })
+              : continuation.toolResults.map((result) => ({
+                  type: 'function_result' as const,
+                  name: result.name,
+                  call_id: result.callId,
+                  result: JSON.stringify(result.output),
+                })),
+          ...(continuation === undefined
+            ? {}
+            : { previous_interaction_id: continuation.previousResponseId }),
           response_format: {
             type: 'text',
             mime_type: 'application/json',
@@ -148,7 +160,9 @@ export class GeminiLLMClient implements LLMClient {
           },
           generation_config: { max_output_tokens: MAX_OUTPUT_TOKENS },
           store: false,
-          ...(tools === undefined || tools.length === 0 ? {} : { tools }),
+          ...(continuation !== undefined || tools === undefined || tools.length === 0
+            ? {}
+            : { tools }),
         },
         { maxRetries: 0, timeout: this.timeoutMs },
       );

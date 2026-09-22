@@ -96,6 +96,9 @@ describe('TriageService', () => {
     const result = await service.analyzeCase('case_test_01');
 
     expect(callOrder).toEqual(['load', 'analyze', 'persist']);
+    expect(dependencies.analyze).toHaveBeenCalledWith(caseInput, {
+      caseId: 'case_test_01',
+    });
     expect(dependencies.persistAnalysis).toHaveBeenCalledWith('case_test_01', {
       outcome: {
         analysisStatus: 'completed',

@@ -178,6 +178,76 @@ describe('OpenAILLMClient', () => {
     });
   });
 
+  it('submits validated tool output for a final structured response without offering more tools', async () => {
+    const captured: CapturedRequest = {};
+    const client = createClient(
+      jsonFetch(
+        createResponseBody([
+          outputMessage([
+            {
+              type: 'output_text',
+              text: JSON.stringify(validAnalysis),
+              annotations: [],
+              logprobs: [],
+            },
+          ]),
+        ]),
+        captured,
+      ),
+    );
+    const request = createTriageRequest(
+      {
+        description: 'A synthetic report requesting relevant prior-case metadata.',
+        subjectRef: 'subject_demo_01',
+      },
+      [
+        {
+          name: 'get_previous_cases',
+          description: 'Retrieve minimized prior-case metadata.',
+          parameters: { type: 'object' },
+        },
+      ],
+    );
+
+    await client.analyze({
+      ...request,
+      toolContinuation: {
+        previousResponseId: 'resp_tool_01',
+        toolCalls: [
+          {
+            id: 'call_test_01',
+            name: 'get_previous_cases',
+            arguments: { subjectRef: 'subject_demo_01' },
+          },
+        ],
+        toolResults: [
+          {
+            callId: 'call_test_01',
+            name: 'get_previous_cases',
+            output: { previousCaseCount: 1, categories: ['privacy'], hasOpenReview: false },
+          },
+        ],
+      },
+    });
+
+    expect(captured.body).toMatchObject({
+      input: expect.arrayContaining([
+        {
+          type: 'function_call',
+          call_id: 'call_test_01',
+          name: 'get_previous_cases',
+          arguments: '{"subjectRef":"subject_demo_01"}',
+        },
+        {
+          type: 'function_call_output',
+          call_id: 'call_test_01',
+          output: '{"previousCaseCount":1,"categories":["privacy"],"hasOpenReview":false}',
+        },
+      ]) as unknown,
+    });
+    expect(captured.body).not.toHaveProperty('tools');
+  });
+
   it('normalizes refusals and incomplete responses', async () => {
     const refusalClient = createClient(
       jsonFetch(

@@ -5,6 +5,7 @@ import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApp } from '../../src/app.js';
+import { ToolExecutionError } from '../../src/errors/application-error.js';
 import type { CaseRecord, CaseRepository } from '../../src/repositories/case.repository.js';
 import type { CaseTriageService } from '../../src/services/triage.service.js';
 
@@ -320,6 +321,29 @@ describe('HTTP application', () => {
 
     expect(responseBody<ErrorResponseBody>(missing).error.code).toBe('CASE_NOT_FOUND');
     expect(responseBody<ErrorResponseBody>(unavailable).error.code).toBe('ANALYSIS_UNAVAILABLE');
+  });
+
+  it('returns a sanitized controlled error when an analysis tool cannot execute', async () => {
+    const app = createApp({
+      caseRepository: createRepository(),
+      triageService: {
+        analyzeCase: vi.fn().mockRejectedValue(
+          new ToolExecutionError({
+            cause: new Error('Synthetic private database and provider details'),
+          }),
+        ),
+      },
+      logger: createSilentLogger(),
+    });
+
+    const response = await request(app).post('/api/cases/case_test_01/analyze').expect(500);
+    const body = responseBody<ErrorResponseBody>(response);
+
+    expect(body.error).toMatchObject({
+      code: 'TOOL_EXECUTION_FAILED',
+      message: 'A permitted analysis tool could not be executed',
+    });
+    expect(JSON.stringify(body)).not.toContain('private database');
   });
 
   it('returns structured errors for missing cases and unexpected failures', async () => {

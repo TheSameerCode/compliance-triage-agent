@@ -122,6 +122,7 @@ export class OpenAILLMClient implements LLMClient {
 
   async analyze(request: LLMAnalysisRequest): Promise<LLMResult> {
     try {
+      const continuation = request.toolContinuation;
       const tools = request.tools?.map((tool) => ({
         type: 'function' as const,
         name: tool.name,
@@ -129,22 +130,44 @@ export class OpenAILLMClient implements LLMClient {
         parameters: { ...tool.parameters },
         strict: true,
       }));
+      const input =
+        continuation === undefined
+          ? [
+              {
+                role: 'user' as const,
+                content: JSON.stringify({ report: request.caseInput }),
+              },
+            ]
+          : [
+              {
+                role: 'user' as const,
+                content: JSON.stringify({ report: request.caseInput }),
+              },
+              ...continuation.toolCalls.map((call) => ({
+                type: 'function_call' as const,
+                call_id: call.id,
+                name: call.name,
+                arguments: JSON.stringify(call.arguments),
+              })),
+              ...continuation.toolResults.map((result) => ({
+                type: 'function_call_output' as const,
+                call_id: result.callId,
+                output: JSON.stringify(result.output),
+              })),
+            ];
       const response = await this.client.responses.parse({
         model: this.model,
         instructions: request.systemPrompt,
-        input: [
-          {
-            role: 'user',
-            content: JSON.stringify({ report: request.caseInput }),
-          },
-        ],
+        input,
         text: {
           format: zodTextFormat(caseAnalysisSchema, 'case_analysis'),
         },
         max_output_tokens: MAX_OUTPUT_TOKENS,
         parallel_tool_calls: false,
         store: false,
-        ...(tools === undefined || tools.length === 0 ? {} : { tools }),
+        ...(continuation !== undefined || tools === undefined || tools.length === 0
+          ? {}
+          : { tools }),
       });
 
       if (response.error !== null) {

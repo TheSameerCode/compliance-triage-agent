@@ -140,6 +140,32 @@ describe('ReliableAnalysisService', () => {
     expect(analyze).toHaveBeenCalledTimes(2);
   });
 
+  it('shares a single tool-round budget across a retry', async () => {
+    let callCount = 0;
+    const analyze = vi.fn<AnalysisRunner['analyze']>((_caseInput, context) => {
+      callCount += 1;
+
+      if (context?.toolRoundBudget === undefined) {
+        return Promise.reject(new Error('Expected a tool-round budget'));
+      }
+
+      if (callCount === 1) {
+        expect(context.toolRoundBudget.tryConsume()).toBe(true);
+        return Promise.reject(new LLMClientError('PROVIDER_UNAVAILABLE', true));
+      }
+
+      expect(context.toolRoundBudget.available).toBe(false);
+      return Promise.resolve(validExecution());
+    });
+    const service = new ReliableAnalysisService({ analysisRunner: { analyze } });
+
+    await expect(
+      service.analyze(syntheticCase, { caseId: 'case-reliability-01' }),
+    ).resolves.toMatchObject({ type: 'validated', retryCount: 1 });
+    expect(analyze).toHaveBeenCalledTimes(2);
+    expect(analyze.mock.calls[0]?.[1]).toBe(analyze.mock.calls[1]?.[1]);
+  });
+
   it('returns a traceable human-review fallback after repeated provider timeouts', async () => {
     const { runner, analyze } = createRunner([
       new LLMClientError('TIMEOUT', true),

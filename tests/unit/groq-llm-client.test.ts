@@ -173,6 +173,74 @@ describe('GroqLLMClient', () => {
     expect(JSON.stringify(captured.body)).not.toContain('"strict":true');
   });
 
+  it('replays a tool call and result once before requiring structured output', async () => {
+    const captured: CapturedRequest = {};
+    const client = createClient(
+      jsonFetch(createResponseBody({ content: JSON.stringify(validAnalysis) }), captured),
+    );
+    const request = createTriageRequest(
+      {
+        description: 'A synthetic report requesting relevant prior-case metadata.',
+        subjectRef: 'subject_demo_01',
+      },
+      [
+        {
+          name: 'get_previous_cases',
+          description: 'Retrieve minimized prior-case metadata.',
+          parameters: { type: 'object' },
+        },
+      ],
+    );
+
+    await client.analyze({
+      ...request,
+      toolContinuation: {
+        previousResponseId: 'chatcmpl_tool_01',
+        toolCalls: [
+          {
+            id: 'call_groq_test_01',
+            name: 'get_previous_cases',
+            arguments: { subjectRef: 'subject_demo_01' },
+          },
+        ],
+        toolResults: [
+          {
+            callId: 'call_groq_test_01',
+            name: 'get_previous_cases',
+            output: { previousCaseCount: 1, categories: ['privacy'], hasOpenReview: false },
+          },
+        ],
+      },
+    });
+
+    expect(captured.body).toMatchObject({
+      messages: expect.arrayContaining([
+        {
+          role: 'assistant',
+          content: null,
+          tool_calls: [
+            {
+              id: 'call_groq_test_01',
+              type: 'function',
+              function: {
+                name: 'get_previous_cases',
+                arguments: '{"subjectRef":"subject_demo_01"}',
+              },
+            },
+          ],
+        },
+        {
+          role: 'tool',
+          tool_call_id: 'call_groq_test_01',
+          content: '{"previousCaseCount":1,"categories":["privacy"],"hasOpenReview":false}',
+        },
+      ]) as unknown,
+      response_format: { type: 'json_schema' },
+    });
+    expect(captured.body).not.toHaveProperty('tools');
+    expect(captured.body).not.toHaveProperty('tool_choice');
+  });
+
   it('normalizes incomplete, refused, and malformed responses', async () => {
     const request = createTriageRequest({
       description: 'A synthetic report long enough to exercise invalid response handling.',

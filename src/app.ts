@@ -5,6 +5,7 @@ import { createCasesRouter } from './api/cases.routes.js';
 import { createHealthRouter } from './api/health.routes.js';
 import { HttpError } from './api/http-error.js';
 import { requestContext } from './api/request-context.js';
+import { DatabaseFailureError, ToolExecutionError } from './errors/application-error.js';
 import type { CaseRepository } from './repositories/case.repository.js';
 import type { CaseTriageService } from './services/triage.service.js';
 
@@ -47,6 +48,10 @@ export function createApp({ caseRepository, logger, triageService }: AppDependen
       httpError = new HttpError(413, 'PAYLOAD_TOO_LARGE', 'Request body exceeds 32kb');
     } else if (error instanceof SyntaxError && hasErrorType(error, 'entity.parse.failed')) {
       httpError = new HttpError(400, 'INVALID_JSON', 'Request body contains invalid JSON');
+    } else if (error instanceof ToolExecutionError) {
+      httpError = new HttpError(500, error.code, error.message);
+    } else if (error instanceof DatabaseFailureError) {
+      httpError = new HttpError(500, error.code, error.message);
     } else {
       httpError = new HttpError(500, 'INTERNAL_SERVER_ERROR', 'An unexpected error occurred');
     }

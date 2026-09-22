@@ -3,8 +3,10 @@ import type { CaseInput } from '../domain/case.schemas.js';
 import type { ReviewDecision } from '../domain/decision.schemas.js';
 import { ApplicationError } from '../errors/application-error.js';
 import type { LLMErrorCode } from '../llm/llm-errors.js';
+import { ToolRoundBudget } from '../tools/tool-registry.js';
 import {
   AnalysisOutputValidationError,
+  type AnalysisContext,
   type AnalysisExecution,
   type AnalysisTrace,
 } from './analysis.service.js';
@@ -12,7 +14,7 @@ import {
 export type ModelAnalysisFailureCode = LLMErrorCode | 'MODEL_OUTPUT_INVALID';
 
 export interface AnalysisRunner {
-  analyze(caseInput: CaseInput): Promise<AnalysisExecution>;
+  analyze(caseInput: CaseInput, context?: AnalysisContext): Promise<AnalysisExecution>;
 }
 
 export interface ValidatedAnalysisResult {
@@ -83,12 +85,16 @@ export class ReliableAnalysisService {
     this.maxRetries = maxRetries;
   }
 
-  async analyze(caseInput: CaseInput): Promise<ReliableAnalysisResult> {
+  async analyze(caseInput: CaseInput, context?: AnalysisContext): Promise<ReliableAnalysisResult> {
     let retryCount = 0;
+    const executionContext =
+      context === undefined || context.toolRoundBudget !== undefined
+        ? context
+        : { ...context, toolRoundBudget: new ToolRoundBudget() };
 
     for (;;) {
       try {
-        const execution = await this.analysisRunner.analyze(caseInput);
+        const execution = await this.analysisRunner.analyze(caseInput, executionContext);
 
         return {
           type: 'validated',

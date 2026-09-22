@@ -11,6 +11,8 @@ import { PrismaCaseRepository } from './repositories/prisma-case.repository.js';
 import { AnalysisService } from './services/analysis.service.js';
 import { ReliableAnalysisService } from './services/reliable-analysis.service.js';
 import { TriageService } from './services/triage.service.js';
+import { createPreviousCasesTool } from './tools/previous-cases.tool.js';
+import { ToolRegistry } from './tools/tool-registry.js';
 
 const environment = loadEnvironment();
 const llmEnvironment = loadLLMEnvironment();
@@ -22,7 +24,8 @@ const llmClient = createLLMClient({
   model: llmEnvironment.LLM_MODEL,
   apiKey: llmEnvironment.LLM_API_KEY,
 });
-const analysisService = new AnalysisService({ llmClient });
+const toolRegistry = new ToolRegistry([createPreviousCasesTool(caseRepository)]);
+const analysisService = new AnalysisService({ llmClient, toolRegistry });
 const reliableAnalysisService = new ReliableAnalysisService({
   analysisRunner: analysisService,
   maxRetries: environment.MAX_LLM_RETRIES,

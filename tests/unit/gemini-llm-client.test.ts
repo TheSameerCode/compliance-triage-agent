@@ -156,6 +156,58 @@ describe('GeminiLLMClient', () => {
     });
   });
 
+  it('continues an interaction with minimized tool output and disables further tools', async () => {
+    const captured: CapturedRequest = {};
+    const client = createClient(jsonFetch(createResponseBody([]), captured));
+    const request = createTriageRequest(
+      {
+        description: 'A synthetic report requesting relevant prior-case metadata.',
+        subjectRef: 'subject_demo_01',
+      },
+      [
+        {
+          name: 'get_previous_cases',
+          description: 'Retrieve minimized prior-case metadata.',
+          parameters: { type: 'object' },
+        },
+      ],
+    );
+
+    await client.analyze({
+      ...request,
+      toolContinuation: {
+        previousResponseId: 'int_tool_01',
+        toolCalls: [
+          {
+            id: 'call_test_01',
+            name: 'get_previous_cases',
+            arguments: { subjectRef: 'subject_demo_01' },
+          },
+        ],
+        toolResults: [
+          {
+            callId: 'call_test_01',
+            name: 'get_previous_cases',
+            output: { previousCaseCount: 1, categories: ['privacy'], hasOpenReview: false },
+          },
+        ],
+      },
+    });
+
+    expect(captured.body).toMatchObject({
+      previous_interaction_id: 'int_tool_01',
+      input: [
+        {
+          type: 'function_result',
+          name: 'get_previous_cases',
+          call_id: 'call_test_01',
+          result: '{"previousCaseCount":1,"categories":["privacy"],"hasOpenReview":false}',
+        },
+      ],
+    });
+    expect(captured.body).not.toHaveProperty('tools');
+  });
+
   it('normalizes incomplete and malformed structured responses', async () => {
     const request = createTriageRequest({
       description: 'A synthetic report long enough to exercise invalid response handling.',

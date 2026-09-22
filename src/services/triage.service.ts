@@ -15,9 +15,10 @@ import type {
   ModelAnalysisFailureCode,
   ReliableAnalysisResult,
 } from './reliable-analysis.service.js';
+import type { AnalysisContext } from './analysis.service.js';
 
 export interface ReliableAnalyzer {
-  analyze(caseInput: CaseInput): Promise<ReliableAnalysisResult>;
+  analyze(caseInput: CaseInput, context?: AnalysisContext): Promise<ReliableAnalysisResult>;
 }
 
 interface TriageResultBase {
@@ -93,7 +94,7 @@ export class TriageService implements CaseTriageService {
     }
 
     const startedAt = this.now();
-    const result = await this.reliableAnalyzer.analyze(caseInput);
+    const result = await this.reliableAnalyzer.analyze(caseInput, { caseId });
     const latencyMs = elapsedMilliseconds(startedAt, this.now());
     const command = this.createPersistenceCommand(result, latencyMs);
     const persisted = await this.repository.persistAnalysis(caseId, command);

@@ -11,6 +11,7 @@ export interface LLMAnalysisRequest {
   readonly promptVersion: string;
   readonly systemPrompt: string;
   readonly tools?: readonly LLMToolDefinition[];
+  readonly toolContinuation?: LLMToolContinuation;
 }
 
 export interface LLMUsage {
@@ -23,6 +24,18 @@ export interface LLMToolCall {
   readonly id: string;
   readonly name: string;
   readonly arguments: unknown;
+}
+
+export interface LLMToolResult {
+  readonly callId: string;
+  readonly name: string;
+  readonly output: unknown;
+}
+
+export interface LLMToolContinuation {
+  readonly previousResponseId: string;
+  readonly toolCalls: readonly LLMToolCall[];
+  readonly toolResults: readonly LLMToolResult[];
 }
 
 interface LLMResultMetadata {
