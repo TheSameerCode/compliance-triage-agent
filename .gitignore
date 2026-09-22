@@ -4,6 +4,8 @@ node_modules/
 # Build and test output
 dist/
 coverage/
+evals/results/*.json
+!evals/results/.gitkeep
 *.tsbuildinfo
 src/generated/prisma/
 
