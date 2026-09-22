@@ -49,13 +49,14 @@ Groq retention controls, including Zero Data Retention, are account settings rat
 
 ## HTTP API
 
-| Method | Path                     | Purpose                                                 |
-| ------ | ------------------------ | ------------------------------------------------------- |
-| `GET`  | `/health`                | Process liveness                                        |
-| `GET`  | `/ready`                 | PostgreSQL readiness                                    |
-| `POST` | `/api/cases`             | Validate and create a case without implicit AI analysis |
-| `POST` | `/api/cases/:id/analyze` | Analyze, route, and persist one immutable run           |
-| `GET`  | `/api/cases/:id`         | Retrieve case metadata and business analysis history    |
+| Method | Path                           | Purpose                                                  |
+| ------ | ------------------------------ | -------------------------------------------------------- |
+| `GET`  | `/health`                      | Process liveness                                         |
+| `GET`  | `/ready`                       | PostgreSQL readiness                                     |
+| `POST` | `/api/cases`                   | Validate and create a case without implicit AI analysis  |
+| `POST` | `/api/cases/:id/analyze`       | Analyze, route, and persist one immutable run            |
+| `GET`  | `/api/cases/:id`               | Retrieve case metadata and business analysis history     |
+| `GET`  | `/api/reviews?status=required` | List minimized metadata for cases requiring human review |
 
 Requests and responses carry an `X-Request-Id`. JSON request bodies are limited to `32kb`, and errors use a stable `{ "error": { ... } }` envelope.
 
@@ -92,10 +93,11 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
 npm run build
 ```
 
-The normal test suite is database-independent. With the migrated synthetic development database available through `DATABASE_URL`, run the separate PostgreSQL API tests with:
+The normal test suite and coverage report are database-independent and never call a live model. Coverage is reported for API, domain, and service code to expose untested safety-critical paths; it is not presented as proof of system safety. With the migrated synthetic development database available through `DATABASE_URL`, run the separate PostgreSQL API tests with:
 
 ```bash
 npm run test:integration
@@ -145,3 +147,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 10: Observability and Privacy-Aware Tracing](docs/phase-10-observability-and-tracing.md)
 - [Phase 11: Golden Evaluation Dataset](docs/phase-11-golden-evaluation-dataset.md)
 - [Phase 12: Evaluation Harness and Regression Gates](docs/phase-12-evaluation-harness.md)
+- [Phase 13: Deterministic Automated Tests](docs/phase-13-automated-tests.md)

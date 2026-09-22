@@ -904,7 +904,7 @@ Return case metadata and analysis history. Avoid returning internal provider tra
 
 ---
 
-### WBS 3.6 — Implement review queue endpoint `[ ]`
+### WBS 3.6 — Implement review queue endpoint `[x]`
 
 **Priority:** P1  
 **Dependencies:** 7.0
@@ -1684,7 +1684,7 @@ Test at minimum:
 
 ---
 
-### WBS 12.4 — Implement fake LLM client `[ ]`
+### WBS 12.4 — Implement fake LLM client `[x]`
 
 **Priority:** P0  
 **Dependencies:** 4.1, 12.1
@@ -1707,7 +1707,7 @@ This enables deterministic tests of all reliability paths.
 
 ---
 
-### WBS 12.5 — Implement retry/fallback unit tests `[ ]`
+### WBS 12.5 — Implement retry/fallback unit tests `[x]`
 
 **Priority:** P0  
 **Dependencies:** 6.2, 6.3, 12.4
@@ -1728,7 +1728,7 @@ Verify:
 
 ---
 
-### WBS 12.6 — Implement API integration tests `[ ]`
+### WBS 12.6 — Implement API integration tests `[x]`
 
 **Priority:** P0  
 **Dependencies:** 3.3–3.6, 12.4
@@ -1753,7 +1753,7 @@ Minimum cases:
 
 ---
 
-### WBS 12.7 — Add test coverage report `[ ]`
+### WBS 12.7 — Add test coverage report `[x]`
 
 **Priority:** P1  
 **Dependencies:** 12.2–12.6
@@ -2653,12 +2653,12 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block E — Tests
 
-- [ ] WBS 12.1 Vitest
-- [ ] WBS 12.2 schema tests
+- [x] WBS 12.1 Vitest
+- [x] WBS 12.2 schema tests
 - [x] WBS 12.3 policy tests
-- [ ] WBS 12.4 fake LLM
-- [ ] WBS 12.5 retry/fallback tests
-- [ ] WBS 12.6 API integration tests
+- [x] WBS 12.4 fake LLM
+- [x] WBS 12.5 retry/fallback tests
+- [x] WBS 12.6 API integration tests
 
 **Checkpoint:** all critical failure paths are deterministic and testable without API key.
 
