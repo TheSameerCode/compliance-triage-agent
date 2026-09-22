@@ -1489,7 +1489,7 @@ This subset supports the most important evaluation metric: **critical human-revi
 
 ## WBS 11 — Evaluation Harness and Regression Gates
 
-### WBS 11.1 — Implement evaluation runner `[ ]`
+### WBS 11.1 — Implement evaluation runner `[x]`
 
 **Priority:** P0  
 **Dependencies:** 5.1, 10.1–10.4
@@ -1518,7 +1518,7 @@ npm run eval
 
 ---
 
-### WBS 11.2 — Implement core metrics `[ ]`
+### WBS 11.2 — Implement core metrics `[x]`
 
 **Priority:** P0  
 **Dependencies:** 11.1
@@ -1549,7 +1549,7 @@ Report at minimum:
 
 ---
 
-### WBS 11.3 — Define regression thresholds `[ ]`
+### WBS 11.3 — Define regression thresholds `[x]`
 
 **Priority:** P0  
 **Dependencies:** 11.2
@@ -1575,7 +1575,7 @@ If the initial baseline does not achieve them, inspect failures and improve prom
 
 ---
 
-### WBS 11.4 — Save evaluation report artifact `[ ]`
+### WBS 11.4 — Save evaluation report artifact `[x]`
 
 **Priority:** P1  
 **Dependencies:** 11.2
@@ -1604,7 +1604,7 @@ Do not commit large or sensitive provider responses.
 
 ---
 
-### WBS 11.5 — Add prompt/model comparison workflow `[ ]`
+### WBS 11.5 — Add prompt/model comparison workflow `[x]`
 
 **Priority:** P1  
 **Dependencies:** 11.4
@@ -2668,9 +2668,9 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 - [x] WBS 10.2 baseline cases
 - [x] WBS 10.3 difficult cases
 - [x] WBS 10.4 critical-review subset
-- [ ] WBS 11.1 runner
-- [ ] WBS 11.2 metrics
-- [ ] WBS 11.3 thresholds
+- [x] WBS 11.1 runner
+- [x] WBS 11.2 metrics
+- [x] WBS 11.3 thresholds
 
 **End-of-day checkpoint:** `npm run eval` produces a clear report and can fail on a regression.
 
