@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createLLMClient } from '../../src/llm/create-llm-client.js';
 import { GeminiLLMClient } from '../../src/llm/gemini-llm-client.js';
+import { GroqLLMClient } from '../../src/llm/groq-llm-client.js';
 import { OpenAILLMClient } from '../../src/llm/openai-llm-client.js';
 
 describe('createLLMClient', () => {
@@ -10,5 +11,6 @@ describe('createLLMClient', () => {
 
     expect(createLLMClient({ provider: 'openai', ...shared })).toBeInstanceOf(OpenAILLMClient);
     expect(createLLMClient({ provider: 'gemini', ...shared })).toBeInstanceOf(GeminiLLMClient);
+    expect(createLLMClient({ provider: 'groq', ...shared })).toBeInstanceOf(GroqLLMClient);
   });
 });

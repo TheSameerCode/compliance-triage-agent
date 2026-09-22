@@ -20,4 +20,14 @@ describe('loadLLMEnvironment', () => {
   it('reports missing LLM settings by field name', () => {
     expect(() => loadLLMEnvironment({ LLM_PROVIDER: 'gemini' })).toThrow(/LLM_MODEL.*LLM_API_KEY/u);
   });
+
+  it('accepts Groq smoke configuration', () => {
+    expect(
+      loadLLMEnvironment({
+        LLM_PROVIDER: 'groq',
+        LLM_MODEL: 'openai/gpt-oss-20b',
+        LLM_API_KEY: 'test-key-not-real',
+      }).LLM_PROVIDER,
+    ).toBe('groq');
+  });
 });

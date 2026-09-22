@@ -16,6 +16,8 @@ The repository does **not** claim production readiness, legal approval, or GDPR 
 
 Database records still contain the submitted case description because persistence is part of the demonstration. Anyone running the project is responsible for keeping the database synthetic and appropriately isolated.
 
+Provider settings are not a substitute for a privacy review. OpenAI and Gemini requests opt out of provider-side interaction storage where their APIs expose that control. Groq data retention, including Zero Data Retention, is configured in the Groq account rather than per request. No provider configuration in this demo is a GDPR-compliance claim.
+
 ## Requirements for a real deployment
 
 A real compliance system would require design and approval beyond this repository, including:

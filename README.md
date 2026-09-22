@@ -4,13 +4,13 @@ A production-oriented LLM compliance triage demo focused on validated structured
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
 
-The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Provider-isolated OpenAI and Gemini adapters plus a versioned triage prompt are available for the upcoming analysis pipeline.
+The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Provider-isolated OpenAI, Gemini, and Groq adapters plus a versioned triage prompt are available for the upcoming analysis pipeline.
 
 ## LLM reliability layer
 
 - Application code depends on a local `LLMClient` contract rather than provider response objects.
-- OpenAI and Gemini adapters request structured output with the existing Zod analysis schema.
-- Provider requests use `store: false`, capture token usage, and normalize failures into application error codes.
+- All provider adapters request structured output derived from the existing Zod analysis schema.
+- Provider requests capture token usage and normalize failures into application error codes. OpenAI and Gemini requests also disable provider-side storage.
 - Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
 
@@ -26,9 +26,19 @@ For Gemini, keep the key only in the ignored `.env` file:
 
 ```dotenv
 LLM_PROVIDER=gemini
-LLM_MODEL=gemini-3.8-flash
+LLM_MODEL=gemini-3.7-flash
 LLM_API_KEY=<your-key>
 ```
+
+For Groq's free tier, create a Groq API key and use a model that supports strict structured output:
+
+```dotenv
+LLM_PROVIDER=groq
+LLM_MODEL=openai/gpt-oss-20b
+LLM_API_KEY=<your-groq-key>
+```
+
+Groq retention controls, including Zero Data Retention, are account settings rather than request parameters. Keep this demo synthetic regardless of provider configuration.
 
 ## HTTP API
 

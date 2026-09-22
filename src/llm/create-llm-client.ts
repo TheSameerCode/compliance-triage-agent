@@ -1,8 +1,9 @@
 import { GeminiLLMClient } from './gemini-llm-client.js';
+import { GroqLLMClient } from './groq-llm-client.js';
 import type { LLMClient } from './llm-client.interface.js';
 import { OpenAILLMClient } from './openai-llm-client.js';
 
-export type LLMProvider = 'openai' | 'gemini';
+export type LLMProvider = 'openai' | 'gemini' | 'groq';
 
 export interface LLMClientConfig {
   readonly provider: LLMProvider;
@@ -25,5 +26,7 @@ export function createLLMClient(config: LLMClientConfig): LLMClient {
       return new OpenAILLMClient(sharedOptions);
     case 'gemini':
       return new GeminiLLMClient(sharedOptions);
+    case 'groq':
+      return new GroqLLMClient(sharedOptions);
   }
 }

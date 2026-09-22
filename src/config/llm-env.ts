@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const llmEnvironmentSchema = z.object({
-  LLM_PROVIDER: z.enum(['openai', 'gemini']).default('openai'),
+  LLM_PROVIDER: z.enum(['openai', 'gemini', 'groq']).default('openai'),
   LLM_MODEL: z.string().trim().min(1),
   LLM_API_KEY: z.string().trim().min(1),
 });

@@ -12,6 +12,7 @@ provider-neutral LLMClient + provider factory
         |
         +--> OpenAI Responses API adapter
         +--> Gemini Interactions API adapter
+        +--> Groq OpenAI-compatible adapter
         |
         +--> structured analysis candidate
         +--> bounded tool request
@@ -26,8 +27,10 @@ The upcoming analysis service remains responsible for treating the returned anal
 - Tool requests are data only. This layer does not execute tools or create an autonomous loop.
 - The OpenAI adapter uses the Responses API structured-output helper with the application-owned Zod schema.
 - The Gemini adapter uses the Interactions API with a JSON Schema generated from that same Zod schema.
-- Both adapters set `store: false` and cap output at 1,200 tokens. The OpenAI adapter also disables parallel tool calls.
+- The Groq adapter uses strict JSON Schema for direct analyses. Tool-enabled requests use JSON-object mode and mandatory local Zod validation because Groq does not currently combine tool use with strict structured output.
+- All adapters cap output at 1,200 tokens. OpenAI and Gemini set `store: false`; the OpenAI adapter also disables parallel tool calls.
 - The Gemini SDK's internal HTTP retries are disabled so the later application reliability layer remains the single owner of retry policy.
+- Groq SDK-level retries are disabled for the same reason, and Groq tool calls remain data that this layer never executes.
 - Raw case descriptions, complete prompts, provider responses, and API keys are never logged.
 - Refusals and incomplete results cannot be mistaken for valid analyses.
 
@@ -60,4 +63,4 @@ Normal tests use a fake `LLMClient` and a mocked HTTP transport, so they do not 
 npm run llm:smoke
 ```
 
-Configure `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` only in the ignored local `.env` file. Use `LLM_PROVIDER=openai` or `LLM_PROVIDER=gemini`. The smoke command emits metadata but not the input narrative or structured model output.
+Configure `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` only in the ignored local `.env` file. Supported providers are `openai`, `gemini`, and `groq`. The smoke command emits metadata but not the input narrative or structured model output.
