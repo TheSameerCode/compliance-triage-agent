@@ -2,16 +2,16 @@
 
 ## Objective
 
-Phase 5 introduces the model boundary without connecting it to the HTTP case workflow yet. The rest of the application depends on a provider-neutral `LLMClient`, while OpenAI SDK calls remain isolated in one adapter.
+Phase 5 introduces the model boundary without connecting it to the HTTP case workflow yet. The rest of the application depends on a provider-neutral `LLMClient`, while provider SDK calls remain isolated in dedicated adapters.
 
 ```text
 CaseInput + triage-v1
         |
         v
-provider-neutral LLMClient
+provider-neutral LLMClient + provider factory
         |
-        v
-OpenAI Responses API adapter
+        +--> OpenAI Responses API adapter
+        +--> Gemini Interactions API adapter
         |
         +--> structured analysis candidate
         +--> bounded tool request
@@ -25,7 +25,9 @@ The upcoming analysis service remains responsible for treating the returned anal
 - `LLMClient` exposes the configured model, structured-analysis requests, optional read-only tool definitions, usage metadata, and provider-neutral results.
 - Tool requests are data only. This layer does not execute tools or create an autonomous loop.
 - The OpenAI adapter uses the Responses API structured-output helper with the application-owned Zod schema.
-- Requests set `store: false`, disable parallel tool calls, and cap output at 1,200 tokens.
+- The Gemini adapter uses the Interactions API with a JSON Schema generated from that same Zod schema.
+- Both adapters set `store: false` and cap output at 1,200 tokens. The OpenAI adapter also disables parallel tool calls.
+- The Gemini SDK's internal HTTP retries are disabled so the later application reliability layer remains the single owner of retry policy.
 - Raw case descriptions, complete prompts, provider responses, and API keys are never logged.
 - Refusals and incomplete results cannot be mistaken for valid analyses.
 
@@ -58,4 +60,4 @@ Normal tests use a fake `LLMClient` and a mocked HTTP transport, so they do not 
 npm run llm:smoke
 ```
 
-Configure `LLM_MODEL` and `LLM_API_KEY` only in the ignored local `.env` file. The smoke command emits metadata but not the input narrative or structured model output.
+Configure `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` only in the ignored local `.env` file. Use `LLM_PROVIDER=openai` or `LLM_PROVIDER=gemini`. The smoke command emits metadata but not the input narrative or structured model output.

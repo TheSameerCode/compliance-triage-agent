@@ -33,6 +33,16 @@ describe('loadEnvironment', () => {
     ).toThrow(/PORT/u);
   });
 
+  it('accepts Gemini as an LLM provider', () => {
+    const environment = loadEnvironment({
+      NODE_ENV: 'test',
+      DATABASE_URL: testDatabaseUrl,
+      LLM_PROVIDER: 'gemini',
+    });
+
+    expect(environment.LLM_PROVIDER).toBe('gemini');
+  });
+
   it('rejects a missing database URL with a clear field name', () => {
     expect(() => loadEnvironment({ NODE_ENV: 'test' })).toThrow(/DATABASE_URL/u);
   });

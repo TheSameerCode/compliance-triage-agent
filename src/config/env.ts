@@ -16,7 +16,7 @@ export const environmentSchema = z
         (value) => ['postgres:', 'postgresql:'].includes(new URL(value).protocol),
         'DATABASE_URL must use the postgres or postgresql protocol',
       ),
-    LLM_PROVIDER: z.enum(['openai']).default('openai'),
+    LLM_PROVIDER: z.enum(['openai', 'gemini']).default('openai'),
     LLM_MODEL: optionalNonEmptyString,
     LLM_API_KEY: optionalNonEmptyString,
     LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),

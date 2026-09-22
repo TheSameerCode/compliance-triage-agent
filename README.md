@@ -4,23 +4,31 @@ A production-oriented LLM compliance triage demo focused on validated structured
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
 
-The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. A provider-isolated OpenAI Responses API adapter and versioned triage prompt are available for the upcoming analysis pipeline.
+The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Provider-isolated OpenAI and Gemini adapters plus a versioned triage prompt are available for the upcoming analysis pipeline.
 
 ## LLM reliability layer
 
 - Application code depends on a local `LLMClient` contract rather than provider response objects.
-- The OpenAI adapter requests strict structured output with the existing Zod analysis schema.
+- OpenAI and Gemini adapters request structured output with the existing Zod analysis schema.
 - Provider requests use `store: false`, capture token usage, and normalize failures into application error codes.
 - Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
 
-The adapter is deterministic-testable without network access. To run the optional live smoke check, set `LLM_MODEL` and `LLM_API_KEY` locally, use a synthetic report only, and run:
+The adapters are deterministic-testable without network access. To run the optional live smoke check, set `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` locally, use a synthetic report only, and run:
 
 ```bash
 npm run llm:smoke
 ```
 
-The command prints only model, prompt-version, result-type, and usage metadata—not the report or model output. Never commit or paste an API key into source, documentation, issues, or chat.
+The command prints only provider, model, prompt-version, result-type, and usage metadata—not the report or model output. Never commit or paste an API key into source, documentation, issues, or chat.
+
+For Gemini, keep the key only in the ignored `.env` file:
+
+```dotenv
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-3.8-flash
+LLM_API_KEY=<your-key>
+```
 
 ## HTTP API
 

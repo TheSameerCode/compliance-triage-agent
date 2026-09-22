@@ -1,5 +1,5 @@
 import { loadEnvironment } from '../src/config/env.js';
-import { OpenAILLMClient } from '../src/llm/openai-llm-client.js';
+import { createLLMClient } from '../src/llm/create-llm-client.js';
 import { createTriageRequest, TRIAGE_PROMPT_VERSION } from '../src/llm/prompts/index.js';
 
 const environment = loadEnvironment();
@@ -8,7 +8,8 @@ if (environment.LLM_API_KEY === undefined || environment.LLM_MODEL === undefined
   throw new Error('LLM_API_KEY and LLM_MODEL are required for the live LLM smoke check');
 }
 
-const client = new OpenAILLMClient({
+const client = createLLMClient({
+  provider: environment.LLM_PROVIDER,
   apiKey: environment.LLM_API_KEY,
   model: environment.LLM_MODEL,
 });
@@ -24,6 +25,7 @@ const result = await client.analyze(
 console.info(
   JSON.stringify({
     status: 'ok',
+    provider: environment.LLM_PROVIDER,
     resultType: result.type,
     model: result.model,
     promptVersion: TRIAGE_PROMPT_VERSION,
