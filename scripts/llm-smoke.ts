@@ -1,12 +1,8 @@
-import { loadEnvironment } from '../src/config/env.js';
+import { loadLLMEnvironment } from '../src/config/llm-env.js';
 import { createLLMClient } from '../src/llm/create-llm-client.js';
 import { createTriageRequest, TRIAGE_PROMPT_VERSION } from '../src/llm/prompts/index.js';
 
-const environment = loadEnvironment();
-
-if (environment.LLM_API_KEY === undefined || environment.LLM_MODEL === undefined) {
-  throw new Error('LLM_API_KEY and LLM_MODEL are required for the live LLM smoke check');
-}
+const environment = loadLLMEnvironment();
 
 const client = createLLMClient({
   provider: environment.LLM_PROVIDER,
