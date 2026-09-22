@@ -8,6 +8,7 @@ import type {
   PersistAnalysisCommand,
   PersistedAnalysisRecord,
 } from './analysis.repository.js';
+import type { PreviousCasesRepository } from './previous-cases.repository.js';
 import type {
   AnalysisRunRecord,
   CaseRecord,
@@ -18,7 +19,9 @@ import type {
 const stringListSchema = z.array(z.string());
 const reviewReasonsSchema = z.array(reviewReasonSchema);
 
-export class PrismaCaseRepository implements CaseRepository, AnalysisRepository {
+export class PrismaCaseRepository
+  implements CaseRepository, AnalysisRepository, PreviousCasesRepository
+{
   constructor(private readonly prisma: PrismaClient) {}
 
   async checkConnection(): Promise<void> {
@@ -125,6 +128,40 @@ export class PrismaCaseRepository implements CaseRepository, AnalysisRepository 
           createdAt: analysisRun.createdAt,
         };
       });
+    } catch (error) {
+      throw new DatabaseFailureError({ cause: error });
+    }
+  }
+
+  async getPreviousCaseMetadata(subjectRef: string, excludeCaseId: string) {
+    try {
+      const previousCaseFilter = {
+        subjectRef,
+        id: { not: excludeCaseId },
+      } as const;
+      const [previousCaseCount, openReviewCount, categoryRows] = await Promise.all([
+        this.prisma.case.count({ where: previousCaseFilter }),
+        this.prisma.case.count({
+          where: { ...previousCaseFilter, status: 'REVIEW_REQUIRED' },
+        }),
+        this.prisma.analysisRun.findMany({
+          where: {
+            category: { not: null },
+            case: previousCaseFilter,
+          },
+          distinct: ['category'],
+          select: { category: true },
+        }),
+      ]);
+      const categories = categoryRows
+        .flatMap(({ category }) => (category === null ? [] : [category]))
+        .sort();
+
+      return {
+        previousCaseCount,
+        categories,
+        hasOpenReview: openReviewCount > 0,
+      };
     } catch (error) {
       throw new DatabaseFailureError({ cause: error });
     }

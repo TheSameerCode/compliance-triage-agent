@@ -26,6 +26,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx scripts/seed.ts",
     "db:check": "tsx scripts/db-check.ts",
+    "tool:smoke": "tsx --env-file-if-exists=.env scripts/tool-smoke.ts",
     "llm:smoke": "tsx --env-file-if-exists=.env scripts/llm-smoke.ts"
   },
   "devDependencies": {

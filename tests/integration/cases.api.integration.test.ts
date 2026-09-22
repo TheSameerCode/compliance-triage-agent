@@ -334,4 +334,87 @@ describe('case API with PostgreSQL', () => {
     expect(persistedCase.status).toBe('NEW');
     expect(persistedCase.analysisRuns).toHaveLength(0);
   });
+
+  it('returns only deterministic minimized metadata for earlier cases of the same subject', async () => {
+    const subjectRef = `subject_phase9_tool_${randomUUID()}`;
+    const [currentCase, earlierOpenCase, earlierClosedCase, unrelatedCase] =
+      await prisma.$transaction([
+        prisma.case.create({
+          data: {
+            description: 'Synthetic current narrative that must never appear in tool output.',
+            subjectRef,
+          },
+        }),
+        prisma.case.create({
+          data: {
+            description: 'Synthetic earlier open narrative that must remain private.',
+            subjectRef,
+            status: 'REVIEW_REQUIRED',
+          },
+        }),
+        prisma.case.create({
+          data: {
+            description: 'Synthetic earlier closed narrative that must remain private.',
+            subjectRef,
+            status: 'ANALYZED',
+          },
+        }),
+        prisma.case.create({
+          data: {
+            description: 'Synthetic unrelated narrative.',
+            subjectRef: `unrelated_${randomUUID()}`,
+            status: 'REVIEW_REQUIRED',
+          },
+        }),
+      ]);
+    createdCaseIds.push(currentCase.id, earlierOpenCase.id, earlierClosedCase.id, unrelatedCase.id);
+    await prisma.analysisRun.createMany({
+      data: [
+        {
+          caseId: earlierOpenCase.id,
+          model: 'fake-model',
+          promptVersion: 'triage-v1',
+          category: 'privacy',
+          severity: 'medium',
+          summary: 'Synthetic private summary.',
+          confidence: 0.8,
+          missingInformation: [],
+          indicators: [],
+          modelSuggestsHumanReview: true,
+          reviewRequired: true,
+          reviewReasons: ['MODEL_SUGGESTED_REVIEW'],
+          analysisStatus: 'completed',
+          retryCount: 0,
+          latencyMs: 10,
+        },
+        {
+          caseId: earlierClosedCase.id,
+          model: 'fake-model',
+          promptVersion: 'triage-v1',
+          category: 'financial',
+          severity: 'low',
+          summary: 'Another synthetic private summary.',
+          confidence: 0.9,
+          missingInformation: [],
+          indicators: [],
+          modelSuggestsHumanReview: false,
+          reviewRequired: false,
+          reviewReasons: [],
+          analysisStatus: 'completed',
+          retryCount: 0,
+          latencyMs: 10,
+        },
+      ],
+    });
+
+    const metadata = await caseRepository.getPreviousCaseMetadata(subjectRef, currentCase.id);
+
+    expect(metadata).toEqual({
+      previousCaseCount: 2,
+      categories: ['financial', 'privacy'],
+      hasOpenReview: true,
+    });
+    expect(JSON.stringify(metadata)).not.toContain('narrative');
+    expect(JSON.stringify(metadata)).not.toContain('summary');
+  });
 });
