@@ -17,6 +17,7 @@ The HTTP API stores synthetic cases and can explicitly analyze a stored case thr
 - Retryable model failures receive at most one iterative retry; permanent failures are not retried.
 - Exhausted model failures produce an explicit fallback with no fabricated analysis and mandatory human review.
 - Database and tool failures are normalized separately and are never blindly retried as model calls.
+- The only MVP tool is a read-only, allow-listed prior-case metadata lookup; it returns no narratives and is limited to one tool round across retries.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
 
 The adapters are deterministic-testable without network access. To run the optional live smoke check, set `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` locally, use a synthetic report only, and run:
@@ -101,6 +102,13 @@ npm run test:integration
 
 Integration tests remove only the exact synthetic records that they create.
 
+Verify the committed prior-case seed through the read-only tool contract:
+
+```bash
+npm run db:seed
+npm run tool:smoke
+```
+
 ## Privacy and limitations
 
 This public demo has no authentication or authorization and must not be exposed as a production service or used with real reports. See [Privacy and Data Protection](docs/privacy.md) for the boundary between demo safeguards and production requirements.
@@ -114,3 +122,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 6: Validated Analysis Pipeline](docs/phase-6-analysis-pipeline.md)
 - [Phase 7: Retry, Failure Handling, and Safe Fallback](docs/phase-7-retry-and-fallback.md)
 - [Phase 8: Deterministic Human-Review Policy](docs/phase-8-human-review-policy.md)
+- [Phase 9: Controlled Tool Calling](docs/phase-9-controlled-tool-calling.md)

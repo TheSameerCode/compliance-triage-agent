@@ -1227,7 +1227,7 @@ This makes the system auditable and easier to debug.
 
 ## WBS 8 — Controlled Tool Calling
 
-### WBS 8.1 — Define tool contract `[ ]`
+### WBS 8.1 — Define tool contract `[x]`
 
 **Priority:** P1  
 **Dependencies:** 2.2, 4.1
@@ -1260,7 +1260,7 @@ Do not return raw prior-case descriptions to the model for the MVP.
 
 ---
 
-### WBS 8.2 — Implement allow-listed tool registry `[ ]`
+### WBS 8.2 — Implement allow-listed tool registry `[x]`
 
 **Priority:** P1  
 **Dependencies:** 8.1
@@ -1273,7 +1273,7 @@ The model may request only registered tools. Unknown tool names must be rejected
 
 ---
 
-### WBS 8.3 — Implement previous-case DB tool `[ ]`
+### WBS 8.3 — Implement previous-case DB tool `[x]`
 
 **Priority:** P1  
 **Dependencies:** 2.4, 8.1
@@ -1290,7 +1290,7 @@ The model may request only registered tools. Unknown tool names must be rejected
 
 ---
 
-### WBS 8.4 — Implement bounded tool loop `[ ]`
+### WBS 8.4 — Implement bounded tool loop `[x]`
 
 **Priority:** P1  
 **Dependencies:** 8.2, 8.3, 5.1
@@ -2681,10 +2681,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 ### Block G — Tool use and traces
 
 - [ ] WBS 2.4 synthetic seed data
-- [ ] WBS 8.1 tool contract
-- [ ] WBS 8.2 registry
-- [ ] WBS 8.3 DB tool
-- [ ] WBS 8.4 bounded tool loop
+- [x] WBS 8.1 tool contract
+- [x] WBS 8.2 registry
+- [x] WBS 8.3 DB tool
+- [x] WBS 8.4 bounded tool loop
 - [ ] WBS 9.1 request IDs
 - [ ] WBS 9.2 structured logging
 - [ ] WBS 9.3 trace metadata
