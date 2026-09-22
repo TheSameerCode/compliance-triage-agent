@@ -792,7 +792,7 @@ Avoid a `RESOLVED` transition in the AI pipeline; final resolution is a human co
 
 ## WBS 3 — HTTP API
 
-### WBS 3.1 — Create application/server separation `[ ]`
+### WBS 3.1 — Create application/server separation `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.2
@@ -810,7 +810,7 @@ Avoid a `RESOLVED` transition in the AI pipeline; final resolution is a human co
 
 ---
 
-### WBS 3.2 — Implement health endpoint `[ ]`
+### WBS 3.2 — Implement health endpoint `[x]`
 
 **Priority:** P0  
 **Dependencies:** 3.1
@@ -833,7 +833,7 @@ Optionally include DB health separately, but do not expose secrets or environmen
 
 ---
 
-### WBS 3.3 — Implement case creation endpoint `[ ]`
+### WBS 3.3 — Implement case creation endpoint `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.1, 2.2, 3.1
@@ -883,7 +883,7 @@ POST /api/cases/:id/analyze
 
 ---
 
-### WBS 3.5 — Implement case retrieval endpoint `[ ]`
+### WBS 3.5 — Implement case retrieval endpoint `[x]`
 
 **Priority:** P1  
 **Dependencies:** 2.2, 2.3
@@ -1310,7 +1310,7 @@ The model may request only registered tools. Unknown tool names must be rejected
 
 ## WBS 9 — Observability and Privacy-Aware Tracing
 
-### WBS 9.1 — Add request ID middleware `[ ]`
+### WBS 9.1 — Add request ID middleware `[x]`
 
 **Priority:** P1  
 **Dependencies:** 3.1
@@ -1325,7 +1325,7 @@ Generate or accept a correlation/request ID and include it in structured logs an
 
 ---
 
-### WBS 9.2 — Add structured logger `[ ]`
+### WBS 9.2 — Add structured logger `[~]`
 
 **Priority:** P1  
 **Dependencies:** 9.1
@@ -1379,7 +1379,7 @@ Do not attempt to persist hidden model reasoning.
 
 ---
 
-### WBS 9.4 — Add privacy note `[ ]`
+### WBS 9.4 — Add privacy note `[x]`
 
 **Priority:** P0  
 **Dependencies:** 9.2
