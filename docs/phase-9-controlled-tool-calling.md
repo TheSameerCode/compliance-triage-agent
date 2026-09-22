@@ -77,7 +77,7 @@ Successful internal analysis traces can include only the tool name and rounded e
 
 Tool and database failures are not treated as model failures and are not blindly retried. The HTTP layer returns a stable, sanitized error envelope without exposing the underlying database/provider cause. Persistence occurs only after a final validated analysis, so failed tool execution does not create a partial analysis run.
 
-Persisting tool names and emitting them in privacy-safe operational logs belongs to the following observability phase (WBS 9.3). Phase 9 exposes the bounded in-memory trace needed for that work without widening the public API.
+[Phase 10](phase-10-observability-and-tracing.md) persists allow-listed tool names and emits them in privacy-safe operational events without widening the public API. Tool arguments and results remain excluded.
 
 ## Verification
 

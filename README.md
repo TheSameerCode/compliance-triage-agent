@@ -18,6 +18,7 @@ The HTTP API stores synthetic cases and can explicitly analyze a stored case thr
 - Exhausted model failures produce an explicit fallback with no fabricated analysis and mandatory human review.
 - Database and tool failures are normalized separately and are never blindly retried as model calls.
 - The only MVP tool is a read-only, allow-listed prior-case metadata lookup; it returns no narratives and is limited to one tool round across retries.
+- Completed and fallback runs persist bounded trace metadata, while request-scoped JSON logs expose only operational fields and sanitized error codes.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
 
 The adapters are deterministic-testable without network access. To run the optional live smoke check, set `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` locally, use a synthetic report only, and run:
@@ -123,3 +124,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 7: Retry, Failure Handling, and Safe Fallback](docs/phase-7-retry-and-fallback.md)
 - [Phase 8: Deterministic Human-Review Policy](docs/phase-8-human-review-policy.md)
 - [Phase 9: Controlled Tool Calling](docs/phase-9-controlled-tool-calling.md)
+- [Phase 10: Observability and Privacy-Aware Tracing](docs/phase-10-observability-and-tracing.md)

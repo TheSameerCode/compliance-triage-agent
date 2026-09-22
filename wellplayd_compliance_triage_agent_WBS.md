@@ -1325,7 +1325,7 @@ Generate or accept a correlation/request ID and include it in structured logs an
 
 ---
 
-### WBS 9.2 — Add structured logger `[~]`
+### WBS 9.2 — Add structured logger `[x]`
 
 **Priority:** P1  
 **Dependencies:** 9.1
@@ -1356,7 +1356,7 @@ Generate or accept a correlation/request ID and include it in structured logs an
 
 ---
 
-### WBS 9.3 — Capture analysis trace metadata `[ ]`
+### WBS 9.3 — Capture analysis trace metadata `[x]`
 
 **Priority:** P1  
 **Dependencies:** 5.3, 8.4
@@ -2685,9 +2685,9 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 - [x] WBS 8.2 registry
 - [x] WBS 8.3 DB tool
 - [x] WBS 8.4 bounded tool loop
-- [ ] WBS 9.1 request IDs
-- [ ] WBS 9.2 structured logging
-- [ ] WBS 9.3 trace metadata
+- [x] WBS 9.1 request IDs
+- [x] WBS 9.2 structured logging
+- [x] WBS 9.3 trace metadata
 
 ### Block H — Shipping discipline
 
@@ -2701,7 +2701,7 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block I — Documentation and final QA
 
-- [ ] WBS 9.4 privacy note
+- [x] WBS 9.4 privacy note
 - [ ] WBS 15.1 README
 - [ ] WBS 15.2 model-failure explanation
 - [ ] WBS 15.3 API examples

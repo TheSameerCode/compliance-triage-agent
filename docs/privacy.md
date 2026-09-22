@@ -10,8 +10,10 @@ The repository does **not** claim production readiness, legal approval, or GDPR 
 
 - HTTP logs contain operational metadata such as request IDs, case IDs, routes, status codes, latency, and error codes.
 - Logs intentionally exclude case descriptions, request bodies, authorization headers, API keys, raw prompts, and complete provider responses.
+- Analysis events use an allow list of operational fields and include tool names only, never tool arguments or results.
 - API errors are sanitized and do not expose database connection details or internal exception messages.
 - The case lookup response omits provider payloads, token/cost data, and other internal trace fields.
+- Persisted analysis traces contain model/prompt versions, retry and latency data, available token counts, and allow-listed tool names; they contain no hidden reasoning or raw report text.
 - Seed and test records use pseudonymous references and synthetic narratives.
 
 Database records still contain the submitted case description because persistence is part of the demonstration. Anyone running the project is responsible for keeping the database synthetic and appropriately isolated.
