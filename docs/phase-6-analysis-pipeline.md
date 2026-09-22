@@ -45,7 +45,7 @@ Malformed output raises `AnalysisOutputValidationError` with the stable code `MO
 
 An unexpected tool request is also rejected at this boundary. Tool execution is not part of Phase 6 and no requested operation is run implicitly.
 
-Normalized `LLMClientError` instances pass through unchanged. The next reliability phase will use these two explicit failure families to implement one bounded retry and a fail-closed fallback.
+Normalized `LLMClientError` instances pass through unchanged to the Phase 7 reliability service, which applies one bounded retry and a fail-closed fallback.
 
 ## Verification
 

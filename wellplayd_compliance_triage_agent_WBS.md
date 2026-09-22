@@ -1078,7 +1078,7 @@ After review policy executes, persist:
 
 ## WBS 6 — Retry, Failure Handling, and Safe Fallback
 
-### WBS 6.1 — Define normalized error types `[ ]`
+### WBS 6.1 — Define normalized error types `[x]`
 
 **Priority:** P0  
 **Dependencies:** 4.2, 5.1
@@ -1095,7 +1095,7 @@ Create domain/application errors for at least:
 
 ---
 
-### WBS 6.2 — Implement one controlled retry for invalid structured output `[ ]`
+### WBS 6.2 — Implement one controlled retry for invalid structured output `[x]`
 
 **Priority:** P0  
 **Dependencies:** 6.1
@@ -1112,7 +1112,7 @@ Create domain/application errors for at least:
 
 ---
 
-### WBS 6.3 — Implement safe fallback `[ ]`
+### WBS 6.3 — Implement safe fallback `[~]`
 
 **Priority:** P0  
 **Dependencies:** 6.2, 1.3
@@ -1131,7 +1131,7 @@ Do **not** fabricate category, severity, or confidence values.
 
 ---
 
-### WBS 6.4 — Implement provider-error fallback `[ ]`
+### WBS 6.4 — Implement provider-error fallback `[~]`
 
 **Priority:** P0  
 **Dependencies:** 6.1, 6.3
@@ -2642,8 +2642,8 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block D — Failure handling
 
-- [ ] WBS 6.1 normalized errors
-- [ ] WBS 6.2 one retry
+- [x] WBS 6.1 normalized errors
+- [x] WBS 6.2 one retry
 - [ ] WBS 6.3 malformed-output fallback
 - [ ] WBS 6.4 provider-error fallback
 - [ ] WBS 7.2 policy override test behavior

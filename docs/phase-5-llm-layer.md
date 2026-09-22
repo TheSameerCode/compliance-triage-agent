@@ -47,7 +47,7 @@ Normalized errors deliberately use generic messages:
 | `MODEL_REFUSAL`             | No        |
 | `INVALID_PROVIDER_RESPONSE` | No        |
 
-Retry policy is not implemented in this layer; the later WBS 6 reliability phase will own the single allowed retry and safe fallback.
+Retry policy is intentionally not implemented inside provider adapters. The Phase 7 application reliability service owns the single allowed retry and safe fallback.
 
 ## Prompt versioning
 

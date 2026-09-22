@@ -14,6 +14,9 @@ The current HTTP slice stores and retrieves synthetic cases without invoking an 
 - Successful service results include only typed analysis and bounded trace metadata such as model, prompt version, latency, response ID, and optional token usage.
 - Provider requests capture token usage and normalize failures into application error codes. OpenAI and Gemini requests also disable provider-side storage.
 - Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
+- Retryable model failures receive at most one iterative retry; permanent failures are not retried.
+- Exhausted model failures produce an explicit fallback with no fabricated analysis and mandatory human review.
+- Database and tool failures are normalized separately and are never blindly retried as model calls.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
 
 The adapters are deterministic-testable without network access. To run the optional live smoke check, set `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` locally, use a synthetic report only, and run:
@@ -100,3 +103,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Privacy and Data Protection](docs/privacy.md)
 - [Phase 5: Provider-Isolated LLM Layer](docs/phase-5-llm-layer.md)
 - [Phase 6: Validated Analysis Pipeline](docs/phase-6-analysis-pipeline.md)
+- [Phase 7: Retry, Failure Handling, and Safe Fallback](docs/phase-7-retry-and-fallback.md)
