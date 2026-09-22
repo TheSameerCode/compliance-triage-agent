@@ -1,0 +1,68 @@
+[
+  {
+    "id": "PRIV-001",
+    "input": {
+      "description": "A public website exposed a spreadsheet containing participant names, home addresses, medical notes, and emergency contact details for several days.",
+      "reporterType": "data-protection-contact",
+      "subjectRef": "subject_eval_priv_01"
+    },
+    "expected": {
+      "category": "privacy",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "privacy", "critical-review"]
+  },
+  {
+    "id": "PRIV-002",
+    "input": {
+      "description": "A membership list was emailed to an unintended external recipient. The report does not state which fields were included, whether the recipient deleted it, or whether affected people were notified.",
+      "reporterType": "staff",
+      "subjectRef": "subject_eval_priv_02"
+    },
+    "expected": {
+      "category": "privacy",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "privacy", "missing-information", "critical-review"]
+  },
+  {
+    "id": "PRIV-003",
+    "input": {
+      "description": "An unencrypted laptop containing background-check documents and participant identity records was lost on public transport and has not been recovered.",
+      "reporterType": "staff",
+      "subjectRef": "subject_eval_priv_03"
+    },
+    "expected": {
+      "category": "privacy",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "privacy", "critical-review"]
+  },
+  {
+    "id": "PRIV-004",
+    "input": {
+      "description": "A coordinator shared event photographs in a partner newsletter. The report is unclear about consent, whether minors appear, which audience received it, and whether removal was requested.",
+      "reporterType": "member",
+      "subjectRef": "subject_eval_priv_04"
+    },
+    "expected": {
+      "category": "privacy",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "privacy",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  }
+]

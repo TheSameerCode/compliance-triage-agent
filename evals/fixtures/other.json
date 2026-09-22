@@ -1,0 +1,85 @@
+[
+  {
+    "id": "OTHER-001",
+    "input": {
+      "description": "The club café published a complete synthetic menu update stating that tomato soup will replace vegetable soup next Tuesday; no person, case, complaint, or compliance concern is described.",
+      "reporterType": "member"
+    },
+    "expected": {
+      "category": "other",
+      "severity": "low",
+      "reviewRequired": false
+    },
+    "tags": ["difficult", "other", "irrelevant-content", "negative-control"]
+  },
+  {
+    "id": "OTHER-002",
+    "input": {
+      "description": "A reporter writes only that something inappropriate may have happened at the club, without describing who was involved, what occurred, when it occurred, or what risk remains.",
+      "reporterType": "anonymous"
+    },
+    "expected": {
+      "category": "other",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "other",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  },
+  {
+    "id": "OTHER-003",
+    "input": {
+      "description": "A member reports removal from a volunteer schedule after raising an unspecified governance concern. The concern, decision reason, dates, messages, and relevant policy are not included.",
+      "reporterType": "member",
+      "subjectRef": "subject_eval_other_03"
+    },
+    "expected": {
+      "category": "other",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "other", "missing-information", "critical-review"]
+  },
+  {
+    "id": "OTHER-004",
+    "input": {
+      "description": "Two synthetic records conflict: one says a complaint was closed by agreement and the other says no decision was made. Neither record identifies the complaint category or supporting evidence.",
+      "reporterType": "case-worker",
+      "subjectRef": "subject_eval_other_04"
+    },
+    "expected": {
+      "category": "other",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["difficult", "other", "conflicting-details", "missing-information", "critical-review"]
+  },
+  {
+    "id": "OTHER-005",
+    "input": {
+      "description": "A submission asks whether an unnamed committee process was fair but provides no decision, policy, participants, timeline, alleged conduct, or concrete effect on any person.",
+      "reporterType": "anonymous"
+    },
+    "expected": {
+      "category": "other",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "other",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  }
+]

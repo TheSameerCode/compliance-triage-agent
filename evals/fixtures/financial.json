@@ -1,0 +1,83 @@
+[
+  {
+    "id": "FIN-001",
+    "input": {
+      "description": "An audit sample shows five reimbursement claims with altered totals and bank transfers to an account not listed for the relevant suppliers.",
+      "reporterType": "auditor",
+      "subjectRef": "subject_eval_fin_01"
+    },
+    "expected": {
+      "category": "financial",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "financial", "critical-review"]
+  },
+  {
+    "id": "FIN-002",
+    "input": {
+      "description": "A treasurer reports that the same supplier invoice appears to have been paid twice, but the bank reference, approval record, and any refund information are not available.",
+      "reporterType": "treasurer",
+      "subjectRef": "subject_eval_fin_02"
+    },
+    "expected": {
+      "category": "financial",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "financial", "missing-information", "critical-review"]
+  },
+  {
+    "id": "FIN-003",
+    "input": {
+      "description": "A synthetic cash log is short by a substantial amount across four events, and the assigned custodian cannot produce deposit slips for any of the affected dates.",
+      "reporterType": "finance-officer",
+      "subjectRef": "subject_eval_fin_03"
+    },
+    "expected": {
+      "category": "financial",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "financial", "critical-review"]
+  },
+  {
+    "id": "FIN-004",
+    "input": {
+      "description": "One ledger export marks an expense as approved while a meeting note says approval was deferred. It is unclear whether money was transferred, whether either record is final, or who entered the data.",
+      "reporterType": "committee-member",
+      "subjectRef": "subject_eval_fin_04"
+    },
+    "expected": {
+      "category": { "oneOf": ["financial", "other"] },
+      "severity": { "oneOf": ["medium", "high"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "financial",
+      "conflicting-details",
+      "ambiguous-category",
+      "critical-review"
+    ]
+  },
+  {
+    "id": "FIN-005",
+    "input": {
+      "description": "A synthetic annual review lists a repeated pattern across twelve monthly expense batches. January contained two unsupported travel claims; February contained a supplier payment without an invoice; March contained a reimbursement approved by the recipient; April contained three altered receipt totals; May contained a payment to an account not present in the supplier register; June contained a duplicate equipment invoice; July contained cash withdrawals without event records; August contained a transfer described differently in the ledger and bank statement; September contained missing approval minutes; October contained an unexplained reversal; November contained another duplicate invoice; and December contained a large year-end transfer without supporting documents. The report includes the dates and amounts but does not include the original receipts, approval identities, supplier confirmations, or explanations for the discrepancies.",
+      "reporterType": "auditor",
+      "subjectRef": "subject_eval_fin_05"
+    },
+    "expected": {
+      "category": "financial",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY", "MISSING_INFORMATION"]
+    },
+    "tags": ["difficult", "financial", "long-input", "missing-information", "critical-review"]
+  }
+]

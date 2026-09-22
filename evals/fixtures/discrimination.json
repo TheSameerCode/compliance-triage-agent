@@ -1,0 +1,89 @@
+[
+  {
+    "id": "DISC-001",
+    "input": {
+      "description": "A registration record and written message indicate that a qualified participant was denied entry to a program specifically because of a protected characteristic.",
+      "reporterType": "participant",
+      "subjectRef": "subject_eval_disc_01"
+    },
+    "expected": {
+      "category": "discrimination",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "discrimination", "critical-review"]
+  },
+  {
+    "id": "DISC-002",
+    "input": {
+      "description": "A member reports being excluded from team selection after disclosing a religious observance, but the selection criteria, comparator records, and decision-maker explanation were not supplied.",
+      "reporterType": "member",
+      "subjectRef": "subject_eval_disc_02"
+    },
+    "expected": {
+      "category": "discrimination",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "discrimination", "missing-information", "critical-review"]
+  },
+  {
+    "id": "DISC-003",
+    "input": {
+      "description": "A disabled participant reports that repeated requests for an available accessibility adjustment were refused, preventing participation in three scheduled events.",
+      "reporterType": "participant",
+      "subjectRef": "subject_eval_disc_03"
+    },
+    "expected": {
+      "category": "discrimination",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "discrimination", "critical-review"]
+  },
+  {
+    "id": "DISC-004",
+    "input": {
+      "description": "A volunteer reports jokes about age followed by removal from a rota. The report does not establish whether the rota change was connected to the comments or to a separate availability issue.",
+      "reporterType": "volunteer",
+      "subjectRef": "subject_eval_disc_04"
+    },
+    "expected": {
+      "category": { "oneOf": ["discrimination", "harassment"] },
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "discrimination",
+      "ambiguous-category",
+      "conflicting-details",
+      "critical-review"
+    ]
+  },
+  {
+    "id": "DISC-005",
+    "input": {
+      "description": "A member reports a single statement that may describe unequal treatment based on gender, but gives no quotation, date, decision, witness, or comparison with other members.",
+      "reporterType": "member",
+      "subjectRef": "subject_eval_disc_05"
+    },
+    "expected": {
+      "category": "discrimination",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "discrimination",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  }
+]

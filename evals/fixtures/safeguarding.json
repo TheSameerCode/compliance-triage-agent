@@ -1,0 +1,83 @@
+[
+  {
+    "id": "SAFE-001",
+    "input": {
+      "description": "A parent reports that an adult volunteer repeatedly sent private late-night messages to a fourteen-year-old participant and asked the participant to keep the conversations secret.",
+      "reporterType": "parent",
+      "subjectRef": "subject_eval_safe_01"
+    },
+    "expected": {
+      "category": "safeguarding",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["SAFEGUARDING_CATEGORY", "HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "safeguarding", "critical-review"]
+  },
+  {
+    "id": "SAFE-002",
+    "input": {
+      "description": "A coach reports that a volunteer used an unnecessary physical restraint on a youth participant during training. Witness names and the exact duration were not supplied.",
+      "reporterType": "coach",
+      "subjectRef": "subject_eval_safe_02"
+    },
+    "expected": {
+      "category": "safeguarding",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["SAFEGUARDING_CATEGORY", "MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "safeguarding", "missing-information", "critical-review"]
+  },
+  {
+    "id": "SAFE-003",
+    "input": {
+      "description": "A synthetic incident log states that a child was left alone at an away venue after the responsible adults departed, and the child could not contact a guardian for two hours.",
+      "reporterType": "staff",
+      "subjectRef": "subject_eval_safe_03"
+    },
+    "expected": {
+      "category": "safeguarding",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["SAFEGUARDING_CATEGORY", "HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "safeguarding", "critical-review"]
+  },
+  {
+    "id": "SAFE-004",
+    "input": {
+      "description": "A complete synthetic report records one prohibited direct-message exchange between an adult team official and a minor, including date, participants, message copy, and witness confirmation.",
+      "reporterType": "safeguarding-officer",
+      "subjectRef": "subject_eval_safe_04"
+    },
+    "expected": {
+      "category": "safeguarding",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["SAFEGUARDING_CATEGORY"]
+    },
+    "tags": ["difficult", "safeguarding", "confidence-policy", "critical-review"]
+  },
+  {
+    "id": "SAFE-005",
+    "input": {
+      "description": "A member says that a youth participant may have been collected by an unauthorized adult, but supplies no date, venue, names, confirmation, or account of what happened next.",
+      "reporterType": "member",
+      "subjectRef": "subject_eval_safe_05"
+    },
+    "expected": {
+      "category": "safeguarding",
+      "severity": { "oneOf": ["medium", "high"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["SAFEGUARDING_CATEGORY", "MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "safeguarding",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  }
+]

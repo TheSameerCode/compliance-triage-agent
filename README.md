@@ -125,3 +125,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 8: Deterministic Human-Review Policy](docs/phase-8-human-review-policy.md)
 - [Phase 9: Controlled Tool Calling](docs/phase-9-controlled-tool-calling.md)
 - [Phase 10: Observability and Privacy-Aware Tracing](docs/phase-10-observability-and-tracing.md)
+- [Phase 11: Golden Evaluation Dataset](docs/phase-11-golden-evaluation-dataset.md)

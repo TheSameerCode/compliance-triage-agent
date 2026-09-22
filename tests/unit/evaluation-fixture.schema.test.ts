@@ -33,7 +33,7 @@ describe('evaluationFixtureFileSchema', () => {
         reviewRequired: true,
         requiredReviewReasons: ['MISSING_INFORMATION'],
       },
-      tags: ['ambiguous'],
+      tags: ['ambiguous', 'critical-review'],
     };
 
     expect(evaluationFixtureFileSchema.safeParse([ambiguousFixture]).success).toBe(true);
@@ -84,5 +84,21 @@ describe('evaluationFixtureFileSchema', () => {
     };
 
     expect(evaluationFixtureFileSchema.safeParse([invalidFixture]).success).toBe(false);
+  });
+
+  it('requires the critical-review tag to match the expected review decision', () => {
+    expect(
+      evaluationFixtureFileSchema.safeParse([{ ...exactFixture, tags: ['baseline'] }]).success,
+    ).toBe(false);
+    expect(
+      evaluationFixtureFileSchema.safeParse([
+        {
+          ...exactFixture,
+          id: 'OTHER-002',
+          expected: { category: 'other', severity: 'low', reviewRequired: false },
+          tags: ['baseline', 'critical-review'],
+        },
+      ]).success,
+    ).toBe(false);
   });
 });

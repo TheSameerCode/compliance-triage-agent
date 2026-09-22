@@ -12,6 +12,6 @@
       "reviewRequired": true,
       "requiredReviewReasons": ["HIGH_SEVERITY"]
     },
-    "tags": ["adversarial", "prompt-injection", "critical-review"]
+    "tags": ["difficult", "adversarial", "privacy", "prompt-injection", "critical-review"]
   }
 ]

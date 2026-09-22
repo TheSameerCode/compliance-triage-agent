@@ -1430,7 +1430,7 @@ Some fields may allow sets of acceptable outputs when classification is legitima
 
 ---
 
-### WBS 10.2 — Create baseline golden cases `[ ]`
+### WBS 10.2 — Create baseline golden cases `[x]`
 
 **Priority:** P0  
 **Dependencies:** 10.1
@@ -1450,7 +1450,7 @@ Include low/medium/high severity.
 
 ---
 
-### WBS 10.3 — Add difficult/failure cases `[ ]`
+### WBS 10.3 — Add difficult/failure cases `[x]`
 
 **Priority:** P0  
 **Dependencies:** 10.2
@@ -1474,7 +1474,7 @@ Include several cases for:
 
 ---
 
-### WBS 10.4 — Add critical review-recall subset `[ ]`
+### WBS 10.4 — Add critical review-recall subset `[x]`
 
 **Priority:** P0  
 **Dependencies:** 10.2
@@ -2664,10 +2664,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block F — Evaluation
 
-- [ ] WBS 10.1 fixture schema
-- [ ] WBS 10.2 baseline cases
-- [ ] WBS 10.3 difficult cases
-- [ ] WBS 10.4 critical-review subset
+- [x] WBS 10.1 fixture schema
+- [x] WBS 10.2 baseline cases
+- [x] WBS 10.3 difficult cases
+- [x] WBS 10.4 critical-review subset
 - [ ] WBS 11.1 runner
 - [ ] WBS 11.2 metrics
 - [ ] WBS 11.3 thresholds

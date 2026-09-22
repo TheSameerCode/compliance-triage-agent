@@ -83,7 +83,19 @@ export const evaluationFixtureSchema = z
         message: 'Fixture tags must be unique',
       }),
   })
-  .strict();
+  .strict()
+  .superRefine((fixture, context) => {
+    const isCriticalReview = fixture.tags.includes('critical-review');
+
+    if (fixture.expected.reviewRequired !== isCriticalReview) {
+      context.addIssue({
+        code: 'custom',
+        path: ['tags'],
+        message:
+          'The critical-review tag must be present exactly when expected.reviewRequired is true',
+      });
+    }
+  });
 
 export const evaluationFixtureFileSchema = z
   .array(evaluationFixtureSchema)

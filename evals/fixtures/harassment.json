@@ -1,0 +1,89 @@
+[
+  {
+    "id": "HARR-001",
+    "input": {
+      "description": "A volunteer provides dated screenshots showing a coordinator repeatedly sending insulting and degrading messages after the volunteer asked for the messages to stop.",
+      "reporterType": "volunteer",
+      "subjectRef": "subject_eval_harr_01"
+    },
+    "expected": {
+      "category": "harassment",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "harassment", "critical-review"]
+  },
+  {
+    "id": "HARR-002",
+    "input": {
+      "description": "A player reports recurring unwanted comments from another adult member during practice, but does not provide the wording, dates, witnesses, or whether the conduct continued after an objection.",
+      "reporterType": "player",
+      "subjectRef": "subject_eval_harr_02"
+    },
+    "expected": {
+      "category": "harassment",
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": ["baseline", "harassment", "missing-information", "critical-review"]
+  },
+  {
+    "id": "HARR-003",
+    "input": {
+      "description": "A committee member reports repeated threatening voice messages stating that the member would be punished for raising concerns, with copies of three messages attached to the synthetic report.",
+      "reporterType": "committee-member",
+      "subjectRef": "subject_eval_harr_03"
+    },
+    "expected": {
+      "category": "harassment",
+      "severity": "high",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["HIGH_SEVERITY"]
+    },
+    "tags": ["baseline", "harassment", "critical-review"]
+  },
+  {
+    "id": "HARR-004",
+    "input": {
+      "description": "A participant reports repeated mocking comments connected to the participant's accent. It is unclear whether access to activities was also restricted, and no witness accounts were supplied.",
+      "reporterType": "participant",
+      "subjectRef": "subject_eval_harr_04"
+    },
+    "expected": {
+      "category": { "oneOf": ["harassment", "discrimination"] },
+      "severity": "medium",
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "harassment",
+      "ambiguous-category",
+      "missing-information",
+      "critical-review"
+    ]
+  },
+  {
+    "id": "HARR-005",
+    "input": {
+      "description": "A staff member says a supervisor made one unwanted humiliating remark in a private meeting, but the exact statement, context, date, and any subsequent behavior are missing.",
+      "reporterType": "staff",
+      "subjectRef": "subject_eval_harr_05"
+    },
+    "expected": {
+      "category": "harassment",
+      "severity": { "oneOf": ["low", "medium"] },
+      "reviewRequired": true,
+      "requiredReviewReasons": ["MISSING_INFORMATION"]
+    },
+    "tags": [
+      "difficult",
+      "harassment",
+      "insufficient-information",
+      "missing-information",
+      "critical-review"
+    ]
+  }
+]
