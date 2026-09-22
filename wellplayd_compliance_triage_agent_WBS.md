@@ -942,7 +942,7 @@ GET /api/reviews?status=required
 
 ---
 
-### WBS 4.2 — Implement provider client `[~]`
+### WBS 4.2 — Implement provider client `[x]`
 
 **Priority:** P0  
 **Dependencies:** 4.1, 0.4
@@ -998,7 +998,7 @@ Add at least one evaluation case containing a prompt-injection style string.
 
 ## WBS 5 — Analysis Pipeline and Structured Output
 
-### WBS 5.1 — Implement extraction/analysis service `[ ]`
+### WBS 5.1 — Implement extraction/analysis service `[x]`
 
 **Priority:** P0  
 **Dependencies:** 1.2, 4.1–4.3
@@ -1023,7 +1023,7 @@ case -> prompt/model call -> raw output -> schema parse -> typed analysis
 
 ---
 
-### WBS 5.2 — Separate raw provider result from domain result `[ ]`
+### WBS 5.2 — Separate raw provider result from domain result `[x]`
 
 **Priority:** P1  
 **Dependencies:** 5.1
@@ -2625,10 +2625,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block C — LLM path
 
-- [ ] WBS 4.1 LLM interface
-- [ ] WBS 4.2 provider client
-- [ ] WBS 4.3 versioned prompt
-- [ ] WBS 5.1 analysis service
+- [x] WBS 4.1 LLM interface
+- [x] WBS 4.2 provider client
+- [x] WBS 4.3 versioned prompt
+- [x] WBS 5.1 analysis service
 - [ ] WBS 7.1 deterministic review policy
 - [ ] WBS 5.3 persist analysis
 - [ ] WBS 5.4 atomic persistence

@@ -19,7 +19,7 @@ provider-neutral LLMClient + provider factory
         +--> normalized application error
 ```
 
-The upcoming analysis service remains responsible for treating the returned analysis candidate as untrusted and validating it at the application boundary before business policy or persistence uses it.
+The Phase 6 analysis service treats the returned analysis candidate as untrusted and validates it again at the application boundary before business policy or persistence can use it.
 
 ## Contracts and safeguards
 

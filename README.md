@@ -4,12 +4,14 @@ A production-oriented LLM compliance triage demo focused on validated structured
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
 
-The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Provider-isolated OpenAI, Gemini, and Groq adapters plus a versioned triage prompt are available for the upcoming analysis pipeline.
+The current HTTP slice stores and retrieves synthetic cases without invoking an LLM. Behind that API, a provider-neutral analysis service converts OpenAI, Gemini, Groq, or fake-client results into locally validated typed analyses. The analyze endpoint remains intentionally deferred until review policy, persistence, and fallback behavior are complete.
 
 ## LLM reliability layer
 
 - Application code depends on a local `LLMClient` contract rather than provider response objects.
 - All provider adapters request structured output derived from the existing Zod analysis schema.
+- The analysis service revalidates every normalized provider result and never returns raw model output.
+- Successful service results include only typed analysis and bounded trace metadata such as model, prompt version, latency, response ID, and optional token usage.
 - Provider requests capture token usage and normalize failures into application error codes. OpenAI and Gemini requests also disable provider-side storage.
 - Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
 - `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
@@ -97,3 +99,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Reliability and Safety Invariants](docs/reliability.md)
 - [Privacy and Data Protection](docs/privacy.md)
 - [Phase 5: Provider-Isolated LLM Layer](docs/phase-5-llm-layer.md)
+- [Phase 6: Validated Analysis Pipeline](docs/phase-6-analysis-pipeline.md)
