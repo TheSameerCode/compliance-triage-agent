@@ -106,6 +106,7 @@ export class PrismaCaseRepository
             analysisStatus: outcome.analysisStatus,
             retryCount: command.retryCount,
             latencyMs: command.latencyMs,
+            toolNames: [...command.toolNames],
             ...(command.inputTokens === undefined ? {} : { inputTokens: command.inputTokens }),
             ...(command.outputTokens === undefined ? {} : { outputTokens: command.outputTokens }),
           },

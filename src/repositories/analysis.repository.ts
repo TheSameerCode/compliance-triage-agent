@@ -7,6 +7,7 @@ export interface PersistAnalysisCommand {
   readonly promptVersion: string;
   readonly retryCount: number;
   readonly latencyMs: number;
+  readonly toolNames: readonly string[];
   readonly inputTokens?: number;
   readonly outputTokens?: number;
 }

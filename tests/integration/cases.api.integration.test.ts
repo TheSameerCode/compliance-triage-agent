@@ -157,6 +157,7 @@ describe('case API with PostgreSQL', () => {
             modelSuggestsHumanReview: false,
           },
           retryCount: 1,
+          toolNames: ['get_previous_cases'],
           trace: {
             model: 'fake-model',
             promptVersion: 'triage-v1',
@@ -217,12 +218,17 @@ describe('case API with PostgreSQL', () => {
     expect(persistedCase.analysisRuns).toHaveLength(1);
     expect(persistedCase.analysisRuns[0]).toMatchObject({
       id: analysisBody.data.analysisRunId,
+      model: 'fake-model',
+      promptVersion: 'triage-v1',
       analysisStatus: 'completed',
       reviewRequired: true,
       retryCount: 1,
       inputTokens: 100,
       outputTokens: 40,
+      toolNames: ['get_previous_cases'],
+      estimatedCost: null,
     });
+    expect(persistedCase.analysisRuns[0]?.latencyMs).toBeGreaterThanOrEqual(0);
     expect(persistedCase.analysisRuns[0]?.reviewReasons).toEqual(
       analysisBody.data.reviewDecision.reviewReasons,
     );
@@ -232,6 +238,7 @@ describe('case API with PostgreSQL', () => {
     expect(retrievalBody.data.analysisRuns[0]?.reviewReasons).toEqual(
       analysisBody.data.reviewDecision.reviewReasons,
     );
+    expect(retrievalBody.data.analysisRuns[0]).not.toHaveProperty('toolNames');
   });
 
   it('persists a provider fallback with mandatory review and no invented analysis', async () => {
@@ -246,6 +253,7 @@ describe('case API with PostgreSQL', () => {
             reviewReasons: ['MODEL_CALL_FAILED'],
           },
           retryCount: 1,
+          toolNames: ['get_previous_cases'],
           failure: { code: 'TIMEOUT' },
         }),
     };
@@ -287,6 +295,8 @@ describe('case API with PostgreSQL', () => {
     });
     expect(persistedCase.status).toBe('REVIEW_REQUIRED');
     expect(persistedCase.analysisRuns[0]).toMatchObject({
+      model: 'fake-model',
+      promptVersion: 'triage-v1',
       analysisStatus: 'fallback',
       category: null,
       severity: null,
@@ -294,7 +304,12 @@ describe('case API with PostgreSQL', () => {
       confidence: null,
       reviewRequired: true,
       reviewReasons: ['MODEL_CALL_FAILED'],
+      toolNames: ['get_previous_cases'],
+      inputTokens: null,
+      outputTokens: null,
+      estimatedCost: null,
     });
+    expect(persistedCase.analysisRuns[0]?.latencyMs).toBeGreaterThanOrEqual(0);
   });
 
   it('leaves case state unchanged when analysis-run persistence fails', async () => {
@@ -309,6 +324,7 @@ describe('case API with PostgreSQL', () => {
             reviewReasons: ['MODEL_CALL_FAILED'],
           },
           retryCount: 0,
+          toolNames: [],
           failure: { code: 'AUTHENTICATION_FAILED' },
         }),
     };

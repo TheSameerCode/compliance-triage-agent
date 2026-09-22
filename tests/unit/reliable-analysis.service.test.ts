@@ -89,6 +89,7 @@ describe('ReliableAnalysisService', () => {
       analysis: validAnalysis,
       trace: createTrace('response-valid'),
       retryCount: 1,
+      toolNames: [],
     });
     expect(analyze).toHaveBeenCalledTimes(2);
   });
@@ -109,6 +110,7 @@ describe('ReliableAnalysisService', () => {
         reviewReasons: ['MODEL_OUTPUT_INVALID'],
       },
       retryCount: 1,
+      toolNames: [],
       failure: { code: 'MODEL_OUTPUT_INVALID' },
       lastTrace: lastError.trace,
     });
@@ -150,7 +152,7 @@ describe('ReliableAnalysisService', () => {
       }
 
       if (callCount === 1) {
-        expect(context.toolRoundBudget.tryConsume()).toBe(true);
+        expect(context.toolRoundBudget.tryConsume('get_previous_cases')).toBe(true);
         return Promise.reject(new LLMClientError('PROVIDER_UNAVAILABLE', true));
       }
 
@@ -161,7 +163,11 @@ describe('ReliableAnalysisService', () => {
 
     await expect(
       service.analyze(syntheticCase, { caseId: 'case-reliability-01' }),
-    ).resolves.toMatchObject({ type: 'validated', retryCount: 1 });
+    ).resolves.toMatchObject({
+      type: 'validated',
+      retryCount: 1,
+      toolNames: ['get_previous_cases'],
+    });
     expect(analyze).toHaveBeenCalledTimes(2);
     expect(analyze.mock.calls[0]?.[1]).toBe(analyze.mock.calls[1]?.[1]);
   });
@@ -184,6 +190,7 @@ describe('ReliableAnalysisService', () => {
         reviewReasons: ['MODEL_CALL_FAILED'],
       },
       retryCount: 1,
+      toolNames: [],
       failure: { code: 'TIMEOUT' },
     });
     expect(analyze).toHaveBeenCalledTimes(2);

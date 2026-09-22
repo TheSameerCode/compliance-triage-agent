@@ -22,6 +22,7 @@ export interface ValidatedAnalysisResult {
   readonly analysis: CaseAnalysis;
   readonly trace: AnalysisTrace;
   readonly retryCount: number;
+  readonly toolNames: readonly string[];
 }
 
 export interface FallbackAnalysisResult {
@@ -30,6 +31,7 @@ export interface FallbackAnalysisResult {
   readonly analysis: null;
   readonly reviewDecision: ReviewDecision & { readonly reviewRequired: true };
   readonly retryCount: number;
+  readonly toolNames: readonly string[];
   readonly failure: {
     readonly code: ModelAnalysisFailureCode;
   };
@@ -101,6 +103,12 @@ export class ReliableAnalysisService {
           analysis: execution.analysis,
           trace: execution.trace,
           retryCount,
+          toolNames: [
+            ...new Set([
+              ...(executionContext?.toolRoundBudget?.invokedToolNames ?? []),
+              ...(execution.trace.tools?.map(({ toolName }) => toolName) ?? []),
+            ]),
+          ],
         };
       } catch (error) {
         if (!isModelAnalysisFailure(error)) {
@@ -123,6 +131,7 @@ export class ReliableAnalysisService {
             reviewReasons: [reviewReasonFor(error)],
           },
           retryCount,
+          toolNames: executionContext?.toolRoundBudget?.invokedToolNames ?? [],
           failure: { code: error.code },
           ...(lastTrace === undefined ? {} : { lastTrace }),
         };

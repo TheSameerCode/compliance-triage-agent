@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { caseInputSchema } from '../domain/case.schemas.js';
+import { ApplicationError } from '../errors/application-error.js';
 import type { CaseRepository } from '../repositories/case.repository.js';
 import type { CaseTriageService } from '../services/triage.service.js';
 import { HttpError } from './http-error.js';
@@ -55,22 +56,40 @@ export function createCasesRouter(
       throw new HttpError(503, 'ANALYSIS_UNAVAILABLE', 'Case analysis is unavailable');
     }
 
-    const result = await triageService.analyzeCase(parsedId.data);
+    let result: Awaited<ReturnType<CaseTriageService['analyzeCase']>>;
+
+    try {
+      result = await triageService.analyzeCase(parsedId.data);
+    } catch (error) {
+      request.log.error({
+        event: 'case.analysis_failed',
+        caseId: parsedId.data,
+        errorCode: error instanceof ApplicationError ? error.code : 'INTERNAL_SERVER_ERROR',
+      });
+      throw error;
+    }
 
     if (result === null) {
       throw new HttpError(404, 'CASE_NOT_FOUND', 'Case was not found');
     }
 
+    const { observability, ...publicResult } = result;
+
     request.log.info({
       event: 'case.analyzed',
       caseId: parsedId.data,
       analysisRunId: result.analysisRunId,
+      model: observability.model,
+      promptVersion: observability.promptVersion,
+      latencyMs: observability.latencyMs,
+      schemaValidity: observability.schemaValidity,
+      toolNames: observability.toolNames,
       analysisStatus: result.analysisStatus,
       reviewRequired: result.reviewDecision.reviewRequired,
       retryCount: result.retryCount,
-      ...(result.analysisStatus === 'fallback' ? { failureCode: result.failure.code } : {}),
+      ...(result.analysisStatus === 'fallback' ? { errorCode: result.failure.code } : {}),
     });
-    response.status(200).json({ data: result });
+    response.status(200).json({ data: publicResult });
   });
 
   router.get('/:id', async (request, response) => {

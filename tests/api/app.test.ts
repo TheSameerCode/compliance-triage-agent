@@ -24,6 +24,25 @@ function createSilentLogger() {
   return pino({ level: 'silent' });
 }
 
+function createCapturedLogger() {
+  const chunks: string[] = [];
+  const destination = new Writable({
+    write(chunk, _encoding, callback) {
+      chunks.push(String(chunk));
+      callback();
+    },
+  });
+
+  return {
+    logger: pino({ level: 'info', base: null }, destination),
+    chunks,
+  };
+}
+
+async function flushLogs(): Promise<void> {
+  await new Promise<void>((resolve) => setImmediate(resolve));
+}
+
 function responseBody<T>(response: { readonly body: unknown }): T {
   return response.body as T;
 }
@@ -210,6 +229,7 @@ describe('HTTP application', () => {
   });
 
   it('returns completed analysis with the application review decision', async () => {
+    const captured = createCapturedLogger();
     const analyzeCase = vi.fn<CaseTriageService['analyzeCase']>().mockResolvedValue({
       analysisRunId: 'run_test_01',
       caseStatus: 'REVIEW_REQUIRED',
@@ -229,11 +249,18 @@ describe('HTTP application', () => {
       },
       retryCount: 0,
       createdAt,
+      observability: {
+        model: 'fake-model',
+        promptVersion: 'triage-v1',
+        latencyMs: 25,
+        schemaValidity: 'valid',
+        toolNames: ['get_previous_cases'],
+      },
     });
     const app = createApp({
       caseRepository: createRepository(),
       triageService: { analyzeCase },
-      logger: createSilentLogger(),
+      logger: captured.logger,
     });
 
     const response = await request(app).post('/api/cases/case_test_01/analyze').expect(200);
@@ -261,9 +288,30 @@ describe('HTTP application', () => {
       },
     });
     expect(analyzeCase).toHaveBeenCalledWith('case_test_01');
+    await flushLogs();
+
+    const logs = captured.chunks.join('');
+    const analyzedLog = captured.chunks
+      .map((chunk) => JSON.parse(chunk) as Record<string, unknown>)
+      .find(({ event }) => event === 'case.analyzed');
+    expect(analyzedLog).toMatchObject({
+      caseId: 'case_test_01',
+      analysisRunId: 'run_test_01',
+      model: 'fake-model',
+      promptVersion: 'triage-v1',
+      latencyMs: 25,
+      schemaValidity: 'valid',
+      toolNames: ['get_previous_cases'],
+      reviewRequired: true,
+      retryCount: 0,
+    });
+    expect(analyzedLog?.requestId).toBeTypeOf('string');
+    expect(logs).not.toContain('Neutral synthetic summary.');
+    expect(logs).not.toContain('Safeguarding concern');
   });
 
   it('returns a degraded successful response for a persisted provider fallback', async () => {
+    const captured = createCapturedLogger();
     const analyzeCase = vi.fn<CaseTriageService['analyzeCase']>().mockResolvedValue({
       analysisRunId: 'run_fallback_01',
       caseStatus: 'REVIEW_REQUIRED',
@@ -276,11 +324,18 @@ describe('HTTP application', () => {
       retryCount: 1,
       failure: { code: 'TIMEOUT' },
       createdAt,
+      observability: {
+        model: 'fake-model',
+        promptVersion: 'triage-v1',
+        latencyMs: 50,
+        schemaValidity: 'unavailable',
+        toolNames: [],
+      },
     });
     const app = createApp({
       caseRepository: createRepository(),
       triageService: { analyzeCase },
-      logger: createSilentLogger(),
+      logger: captured.logger,
     });
 
     const response = await request(app).post('/api/cases/case_test_01/analyze').expect(200);
@@ -298,6 +353,23 @@ describe('HTTP application', () => {
       analysis: null,
       reviewDecision: { reviewRequired: true },
       failure: { code: 'TIMEOUT' },
+    });
+    await flushLogs();
+
+    const fallbackLog = captured.chunks
+      .map((chunk) => JSON.parse(chunk) as Record<string, unknown>)
+      .find(({ event }) => event === 'case.analyzed');
+    expect(fallbackLog).toMatchObject({
+      caseId: 'case_test_01',
+      analysisRunId: 'run_fallback_01',
+      model: 'fake-model',
+      promptVersion: 'triage-v1',
+      latencyMs: 50,
+      schemaValidity: 'unavailable',
+      toolNames: [],
+      reviewRequired: true,
+      retryCount: 1,
+      errorCode: 'TIMEOUT',
     });
   });
 
@@ -324,6 +396,7 @@ describe('HTTP application', () => {
   });
 
   it('returns a sanitized controlled error when an analysis tool cannot execute', async () => {
+    const captured = createCapturedLogger();
     const app = createApp({
       caseRepository: createRepository(),
       triageService: {
@@ -333,7 +406,7 @@ describe('HTTP application', () => {
           }),
         ),
       },
-      logger: createSilentLogger(),
+      logger: captured.logger,
     });
 
     const response = await request(app).post('/api/cases/case_test_01/analyze').expect(500);
@@ -344,6 +417,18 @@ describe('HTTP application', () => {
       message: 'A permitted analysis tool could not be executed',
     });
     expect(JSON.stringify(body)).not.toContain('private database');
+    await flushLogs();
+
+    const logs = captured.chunks.join('');
+    const failedLog = captured.chunks
+      .map((chunk) => JSON.parse(chunk) as Record<string, unknown>)
+      .find(({ event }) => event === 'case.analysis_failed');
+    expect(failedLog).toMatchObject({
+      caseId: 'case_test_01',
+      errorCode: 'TOOL_EXECUTION_FAILED',
+    });
+    expect(failedLog?.requestId).toBeTypeOf('string');
+    expect(logs).not.toContain('private database');
   });
 
   it('returns structured errors for missing cases and unexpected failures', async () => {
@@ -372,21 +457,14 @@ describe('HTTP application', () => {
   });
 
   it('does not write raw case descriptions to structured logs', async () => {
-    const chunks: string[] = [];
-    const destination = new Writable({
-      write(chunk, _encoding, callback) {
-        chunks.push(String(chunk));
-        callback();
-      },
-    });
-    const logger = pino({ level: 'info', base: null }, destination);
-    const app = createApp({ caseRepository: createRepository(), logger });
+    const captured = createCapturedLogger();
+    const app = createApp({ caseRepository: createRepository(), logger: captured.logger });
     const sensitiveNarrative = 'Synthetic private narrative that must never enter logs.';
 
     await request(app).post('/api/cases').send({ description: sensitiveNarrative }).expect(201);
-    await new Promise<void>((resolve) => setImmediate(resolve));
+    await flushLogs();
 
-    const logs = chunks.join('');
+    const logs = captured.chunks.join('');
     expect(logs).toContain('case.created');
     expect(logs).toContain('case_test_01');
     expect(logs).not.toContain(sensitiveNarrative);

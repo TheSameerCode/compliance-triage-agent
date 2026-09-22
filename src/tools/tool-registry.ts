@@ -21,17 +21,25 @@ export interface ExecutedToolCall {
 
 export class ToolRoundBudget {
   private remainingRounds = 1;
+  private readonly invokedNames: string[] = [];
 
   get available(): boolean {
     return this.remainingRounds > 0;
   }
 
-  tryConsume(): boolean {
+  get invokedToolNames(): readonly string[] {
+    return [...this.invokedNames];
+  }
+
+  tryConsume(toolName: string): boolean {
     if (!this.available) {
       return false;
     }
 
     this.remainingRounds -= 1;
+
+    this.invokedNames.push(toolName);
+
     return true;
   }
 }

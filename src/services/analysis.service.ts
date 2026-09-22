@@ -130,13 +130,13 @@ export class AnalysisService {
         throw new ToolExecutionError();
       }
 
-      if (!toolRoundBudget.tryConsume()) {
-        throw new ToolExecutionError();
-      }
-
       const toolCall = initialResult.toolCalls[0];
 
       if (toolCall === undefined || context === undefined || caseInput.subjectRef === undefined) {
+        throw new ToolExecutionError();
+      }
+
+      if (!toolRoundBudget.tryConsume(toolCall.name)) {
         throw new ToolExecutionError();
       }
 

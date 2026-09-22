@@ -26,6 +26,15 @@ interface TriageResultBase {
   readonly caseStatus: 'ANALYZED' | 'REVIEW_REQUIRED';
   readonly retryCount: number;
   readonly createdAt: Date;
+  readonly observability: AnalysisObservability;
+}
+
+export interface AnalysisObservability {
+  readonly model: string;
+  readonly promptVersion: string;
+  readonly latencyMs: number;
+  readonly schemaValidity: 'valid' | 'invalid' | 'unavailable';
+  readonly toolNames: readonly string[];
 }
 
 export interface CompletedTriageResult extends TriageResultBase {
@@ -98,6 +107,18 @@ export class TriageService implements CaseTriageService {
     const latencyMs = elapsedMilliseconds(startedAt, this.now());
     const command = this.createPersistenceCommand(result, latencyMs);
     const persisted = await this.repository.persistAnalysis(caseId, command);
+    const observability: AnalysisObservability = {
+      model: command.model,
+      promptVersion: command.promptVersion,
+      latencyMs: command.latencyMs,
+      schemaValidity:
+        result.type === 'validated'
+          ? 'valid'
+          : result.failure.code === 'MODEL_OUTPUT_INVALID'
+            ? 'invalid'
+            : 'unavailable',
+      toolNames: command.toolNames,
+    };
 
     if (result.type === 'validated') {
       return {
@@ -108,6 +129,7 @@ export class TriageService implements CaseTriageService {
         analysis: result.analysis,
         reviewDecision: command.outcome.reviewDecision,
         retryCount: result.retryCount,
+        observability,
       };
     }
 
@@ -120,6 +142,7 @@ export class TriageService implements CaseTriageService {
       reviewDecision: result.reviewDecision,
       retryCount: result.retryCount,
       failure: result.failure,
+      observability,
     };
   }
 
@@ -136,6 +159,7 @@ export class TriageService implements CaseTriageService {
         promptVersion: result.trace.promptVersion,
         retryCount: result.retryCount,
         latencyMs,
+        toolNames: result.toolNames,
         ...(result.trace.usage === undefined
           ? {}
           : {
@@ -158,6 +182,7 @@ export class TriageService implements CaseTriageService {
       promptVersion: trace?.promptVersion ?? this.promptVersion,
       retryCount: result.retryCount,
       latencyMs,
+      toolNames: [...new Set(result.toolNames)],
       ...(trace?.usage === undefined
         ? {}
         : {

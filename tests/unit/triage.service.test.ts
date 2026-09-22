@@ -31,6 +31,7 @@ function createDependencies() {
     type: 'validated',
     analysis,
     retryCount: 1,
+    toolNames: ['get_previous_cases'],
     trace: {
       model: 'fake-model-v2',
       promptVersion: 'triage-v1',
@@ -67,6 +68,7 @@ describe('TriageService', () => {
         type: 'validated',
         analysis,
         retryCount: 1,
+        toolNames: ['get_previous_cases'],
         trace: {
           model: 'fake-model-v2',
           promptVersion: 'triage-v1',
@@ -119,6 +121,7 @@ describe('TriageService', () => {
       latencyMs: 45,
       inputTokens: 120,
       outputTokens: 50,
+      toolNames: ['get_previous_cases'],
     });
     expect(result).toMatchObject({
       analysisRunId: 'run_test_01',
@@ -134,6 +137,13 @@ describe('TriageService', () => {
           'MISSING_INFORMATION',
         ],
       },
+      observability: {
+        model: 'fake-model-v2',
+        promptVersion: 'triage-v1',
+        latencyMs: 45,
+        schemaValidity: 'valid',
+        toolNames: ['get_previous_cases'],
+      },
     });
   });
 
@@ -148,6 +158,7 @@ describe('TriageService', () => {
         reviewReasons: ['MODEL_CALL_FAILED'],
       },
       retryCount: 1,
+      toolNames: ['get_previous_cases'],
       failure: { code: 'TIMEOUT' },
     });
     const service = new TriageService({
@@ -174,13 +185,81 @@ describe('TriageService', () => {
       promptVersion: 'triage-v1',
       retryCount: 1,
       latencyMs: 60,
+      toolNames: ['get_previous_cases'],
     });
     expect(result).toMatchObject({
       analysisStatus: 'fallback',
       analysis: null,
       caseStatus: 'REVIEW_REQUIRED',
       failure: { code: 'TIMEOUT' },
+      observability: {
+        model: 'configured-fallback-model',
+        promptVersion: 'triage-v1',
+        latencyMs: 60,
+        schemaValidity: 'unavailable',
+        toolNames: ['get_previous_cases'],
+      },
     });
+  });
+
+  it('persists bounded trace metadata for an invalid-output fallback', async () => {
+    const dependencies = createDependencies();
+    dependencies.analyze.mockResolvedValue({
+      type: 'fallback',
+      analysisStatus: 'fallback',
+      analysis: null,
+      reviewDecision: {
+        reviewRequired: true,
+        reviewReasons: ['MODEL_OUTPUT_INVALID'],
+      },
+      retryCount: 1,
+      toolNames: ['get_previous_cases'],
+      failure: { code: 'MODEL_OUTPUT_INVALID' },
+      lastTrace: {
+        model: 'fake-model-invalid',
+        promptVersion: 'triage-v1',
+        providerResponseId: 'response-invalid-02',
+        latencyMs: 30,
+        usage: { inputTokens: 150, outputTokens: 20, totalTokens: 170 },
+        tools: [{ toolName: 'get_previous_cases', latencyMs: 4 }],
+      },
+    });
+    const service = new TriageService({
+      repository: dependencies.repository,
+      reliableAnalyzer: dependencies.reliableAnalyzer,
+      model: 'configured-fallback-model',
+      promptVersion: 'triage-v1',
+      reviewPolicy: { confidenceThreshold: 0.75 },
+      now: vi.fn().mockReturnValueOnce(300).mockReturnValueOnce(370),
+    });
+
+    const result = await service.analyzeCase('case_test_01');
+
+    expect(dependencies.persistAnalysis).toHaveBeenCalledWith(
+      'case_test_01',
+      expect.objectContaining({
+        model: 'fake-model-invalid',
+        promptVersion: 'triage-v1',
+        retryCount: 1,
+        latencyMs: 70,
+        inputTokens: 150,
+        outputTokens: 20,
+        toolNames: ['get_previous_cases'],
+      }),
+    );
+    expect(result).toMatchObject({
+      analysisStatus: 'fallback',
+      observability: {
+        model: 'fake-model-invalid',
+        promptVersion: 'triage-v1',
+        latencyMs: 70,
+        schemaValidity: 'invalid',
+        toolNames: ['get_previous_cases'],
+      },
+    });
+    expect(JSON.stringify(dependencies.persistAnalysis.mock.calls)).not.toContain(
+      'response-invalid-02',
+    );
   });
 
   it('does not invoke a model or persistence for an unknown case', async () => {
