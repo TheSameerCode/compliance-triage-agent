@@ -1,3 +1,5 @@
+import { ApplicationError } from '../errors/application-error.js';
+
 export type LLMErrorCode =
   | 'TIMEOUT'
   | 'RATE_LIMITED'
@@ -19,14 +21,8 @@ const publicMessages: Record<LLMErrorCode, string> = {
   INVALID_PROVIDER_RESPONSE: 'The model provider returned an invalid response',
 };
 
-export class LLMClientError extends Error {
-  readonly code: LLMErrorCode;
-  readonly retryable: boolean;
-
+export class LLMClientError extends ApplicationError<LLMErrorCode> {
   constructor(code: LLMErrorCode, retryable: boolean, options?: ErrorOptions) {
-    super(publicMessages[code], options);
-    this.name = 'LLMClientError';
-    this.code = code;
-    this.retryable = retryable;
+    super('LLMClientError', code, publicMessages[code], retryable, options);
   }
 }

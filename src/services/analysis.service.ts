@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 
 import { caseAnalysisSchema, type CaseAnalysis } from '../domain/analysis.schemas.js';
 import type { CaseInput } from '../domain/case.schemas.js';
+import { ApplicationError } from '../errors/application-error.js';
 import type { LLMClient, LLMResult, LLMUsage } from '../llm/llm-client.interface.js';
 import { createTriageRequest } from '../llm/prompts/index.js';
 
@@ -23,14 +24,17 @@ export interface AnalysisValidationIssue {
   readonly path: string;
 }
 
-export class AnalysisOutputValidationError extends Error {
-  readonly code = 'MODEL_OUTPUT_INVALID' as const;
+export class AnalysisOutputValidationError extends ApplicationError<'MODEL_OUTPUT_INVALID'> {
   readonly issues: readonly AnalysisValidationIssue[];
   readonly trace: AnalysisTrace;
 
   constructor(issues: readonly AnalysisValidationIssue[], trace: AnalysisTrace) {
-    super('Model output failed application validation');
-    this.name = 'AnalysisOutputValidationError';
+    super(
+      'AnalysisOutputValidationError',
+      'MODEL_OUTPUT_INVALID',
+      'Model output failed application validation',
+      true,
+    );
     this.issues = issues;
     this.trace = trace;
   }
