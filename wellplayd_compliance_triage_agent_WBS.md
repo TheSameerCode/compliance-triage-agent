@@ -1935,7 +1935,7 @@ Optional: skip automatic fork execution for security/cost reasons.
 
 ## WBS 15 — Documentation and Demo Assets
 
-### WBS 15.1 — Write reviewer-first README `[ ]`
+### WBS 15.1 — Write reviewer-first README `[x]`
 
 **Priority:** P0  
 **Dependencies:** Core implementation
@@ -1979,7 +1979,7 @@ CI
 
 ---
 
-### WBS 15.2 — Document “What happens when the model is wrong?” `[ ]`
+### WBS 15.2 — Document “What happens when the model is wrong?” `[x]`
 
 **Priority:** P0  
 **Dependencies:** 6.0, 7.0
@@ -2015,7 +2015,7 @@ Explain that the application is designed so model failure is an expected state, 
 
 ---
 
-### WBS 15.3 — Add API usage examples `[ ]`
+### WBS 15.3 — Add API usage examples `[x]`
 
 **Priority:** P0  
 **Dependencies:** 3.3–3.6
@@ -2038,7 +2038,7 @@ Use synthetic data only.
 
 ---
 
-### WBS 15.4 — Document evaluation methodology `[ ]`
+### WBS 15.4 — Document evaluation methodology `[x]`
 
 **Priority:** P0  
 **Dependencies:** 10,11
@@ -2058,7 +2058,7 @@ Explain:
 
 ---
 
-### WBS 15.5 — Add limitations section `[ ]`
+### WBS 15.5 — Add limitations section `[x]`
 
 **Priority:** P0  
 **Dependencies:** Core implementation
@@ -2083,7 +2083,7 @@ A strong limitations section signals engineering judgment rather than weakness.
 
 ---
 
-### WBS 15.6 — Prepare demo script `[ ]`
+### WBS 15.6 — Prepare demo script `[x]`
 
 **Priority:** P1  
 **Dependencies:** 15.1–15.5
@@ -2702,12 +2702,12 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 ### Block I — Documentation and final QA
 
 - [x] WBS 9.4 privacy note
-- [ ] WBS 15.1 README
-- [ ] WBS 15.2 model-failure explanation
-- [ ] WBS 15.3 API examples
-- [ ] WBS 15.4 eval methodology
-- [ ] WBS 15.5 limitations
-- [ ] WBS 15.6 demo script
+- [x] WBS 15.1 README
+- [x] WBS 15.2 model-failure explanation
+- [x] WBS 15.3 API examples
+- [x] WBS 15.4 eval methodology
+- [x] WBS 15.5 limitations
+- [x] WBS 15.6 demo script
 - [ ] WBS 16.1 clean-clone test
 - [ ] WBS 16.2 quality commands
 - [ ] WBS 16.3 security sweep

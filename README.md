@@ -2,129 +2,282 @@
 
 [![CI](https://github.com/TheSameerCode/compliance-triage-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/TheSameerCode/compliance-triage-agent/actions/workflows/ci.yml)
 
-A production-oriented LLM compliance triage demo focused on validated structured output, deterministic safeguards, and human review.
+A production-oriented TypeScript/Node service that turns a synthetic compliance report into a schema-validated triage suggestion while keeping the final routing decision in application code and humans in control.
 
-> Work in progress: the project is being implemented from the included work breakdown structure.
+The project demonstrates the engineering path from an untrusted model response to a reviewable, persisted result: strict Zod schemas, bounded retry, fail-closed fallback, deterministic human-review rules, a minimized read-only tool, PostgreSQL transactions, privacy-aware logs, Docker, deterministic tests, live evaluation gates, and GitHub Actions CI.
 
-The HTTP API stores synthetic cases and can explicitly analyze a stored case through the configured OpenAI, Gemini, or Groq adapter. Model output is locally validated, retried at most once when appropriate, routed by deterministic application policy, and persisted atomically with the parent case status.
+> **Scope:** this is an interview project that uses synthetic data. It is not a production compliance system, legal advice, or a claim of GDPR compliance.
 
-## LLM reliability layer
+## Why this project
 
-- Application code depends on a local `LLMClient` contract rather than provider response objects.
-- All provider adapters request structured output derived from the existing Zod analysis schema.
-- The analysis service revalidates every normalized provider result and never returns raw model output.
-- Successful service results include only typed analysis and bounded trace metadata such as model, prompt version, latency, response ID, and optional token usage.
-- Provider requests capture token usage and normalize failures into application error codes. OpenAI and Gemini requests also disable provider-side storage.
-- Model refusals, incomplete output, malformed tool arguments, rate limits, authentication failures, timeouts, and provider outages are explicit outcomes.
-- Retryable model failures receive at most one iterative retry; permanent failures are not retried.
-- Exhausted model failures produce an explicit fallback with no fabricated analysis and mandatory human review.
-- Database and tool failures are normalized separately and are never blindly retried as model calls.
-- The only MVP tool is a read-only, allow-listed prior-case metadata lookup; it returns no narratives and is limited to one tool round across retries.
-- Completed and fallback runs persist bounded trace metadata, while request-scoped JSON logs expose only operational fields and sanitized error codes.
-- `triage-v1` treats report text as untrusted data and prohibits autonomous legal, disciplinary, guilt, or case-resolution decisions.
+Compliance triage is a useful reliability test for production AI because the model can be wrong while the surrounding product still has to behave safely. This service does not ask an LLM to make a final legal, disciplinary, guilt, or case-resolution decision. It asks for a bounded structured suggestion, validates it locally, applies application-owned policy, and routes uncertain or sensitive outcomes to a person.
 
-The adapters are deterministic-testable without network access. To run the optional live smoke check, set `LLM_PROVIDER`, `LLM_MODEL`, and `LLM_API_KEY` locally, use a synthetic report only, and run:
+The implementation is aimed at the engineering concerns in the wellplayd AI Developer role: typed TypeScript, model abstraction, structured output, tools, retries, observable failure modes, regression evaluation, PostgreSQL, CI, and explicit human control.
+
+## Key engineering principles
+
+- **Model output is untrusted input.** Every response is normalized and validated against a strict local schema before use.
+- **Routing belongs to the application.** Safeguarding, high severity, low confidence, missing information, and model-raised concern independently require human review.
+- **Failure is an expected state.** Retryable model failures get at most one retry; exhaustion creates no invented analysis and routes to review.
+- **Side effects are deliberate.** Creating a case never invokes AI. Analysis is an explicit endpoint and each run is immutable.
+- **Tools are least-privilege.** One allow-listed, read-only tool returns minimized prior-case metadata, never earlier narratives.
+- **Sensitive text stays out of telemetry.** Logs and evaluation artifacts contain bounded operational metadata rather than reports, prompts, raw provider payloads, or secrets.
+- **Claims require evidence.** Offline tests, PostgreSQL integration tests, and live-model evaluations are separate so provider variability cannot weaken deterministic CI.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Client[API client] --> HTTP[Express API<br/>request ID + 32 KB limit]
+    HTTP --> Input[Strict Zod input validation]
+    Input --> Cases[(PostgreSQL via Prisma)]
+    HTTP --> Triage[Triage service]
+    Triage --> Reliable[Reliability boundary<br/>one retry + fallback]
+    Reliable --> Analysis[Analysis service<br/>local output validation]
+    Analysis --> Contract[LLMClient interface]
+    Contract --> Providers[OpenAI / Gemini / Groq]
+    Analysis --> Tools[Allow-listed read-only tool]
+    Tools --> Cases
+    Reliable --> Policy[Deterministic review policy]
+    Policy --> Tx[Atomic analysis + case-status transaction]
+    Tx --> Cases
+    Cases --> Queue[Human review queue]
+```
+
+Provider SDK objects stop at the adapter boundary. Controllers depend on repositories and services, provider-independent domain types cross the application, and the analysis run plus parent case status are committed atomically.
+
+## When the model is wrong
+
+```mermaid
+flowchart TD
+    Output[Model output] --> Valid{Schema valid?}
+    Valid -- Yes --> Policy[Apply deterministic policy]
+    Policy --> Review{Review required?}
+    Review -- Yes --> Human[Human review queue]
+    Review -- No --> Persist[Persist analyzed result]
+    Valid -- No --> Retry[Retry once with validation feedback]
+    Retry --> ValidNow{Valid now?}
+    ValidNow -- Yes --> Policy
+    ValidNow -- No --> Fallback[Persist fallback<br/>no fabricated analysis]
+    Fallback --> Human
+```
+
+The LLM never owns routing. A syntactically valid answer can still be routed to review by deterministic policy, and invalid or unavailable output fails closed with `MODEL_OUTPUT_INVALID` or `MODEL_CALL_FAILED`. Database and tool failures are distinct application failures and are not blindly retried as model calls.
+
+## API walkthrough
+
+All examples below use invented reports. Start the service first, then replace `<case-id>` with the ID returned by case creation. Analysis consumes provider quota when live model credentials are configured.
+
+### Health and readiness
+
+```bash
+curl http://localhost:3000/health
+curl http://localhost:3000/ready
+```
+
+```json
+{"status":"ok"}
+{"status":"ready"}
+```
+
+`/health` reports process liveness. `/ready` checks PostgreSQL and returns `503` with `{"status":"not_ready"}` when the database is unavailable.
+
+### Create a synthetic case
+
+```bash
+curl -i -X POST http://localhost:3000/api/cases \
+  -H "Content-Type: application/json" \
+  -H "X-Request-Id: readme-demo-create" \
+  -d '{"description":"A synthetic member reports repeated unwanted messages after club training.","reporterType":"member","subjectRef":"subject_readme_demo"}'
+```
+
+The endpoint returns `201`, a `Location` header, and a response shaped like:
+
+```json
+{
+  "data": {
+    "id": "<case-id>",
+    "status": "NEW",
+    "createdAt": "<timestamp>"
+  }
+}
+```
+
+Creation only validates and persists; it does not call a model.
+
+### Analyze explicitly
+
+```bash
+curl -X POST http://localhost:3000/api/cases/<case-id>/analyze \
+  -H "X-Request-Id: readme-demo-analyze"
+```
+
+A schema-valid run returns a completed analysis plus the application-owned review decision:
+
+```json
+{
+  "data": {
+    "analysisRunId": "<analysis-run-id>",
+    "caseStatus": "REVIEW_REQUIRED",
+    "createdAt": "<timestamp>",
+    "analysisStatus": "completed",
+    "analysis": {
+      "category": "harassment",
+      "severity": "medium",
+      "summary": "A synthetic report of repeated unwanted contact.",
+      "missingInformation": ["Whether the contact continued after a clear request to stop"],
+      "indicators": ["Repeated unwanted messages"],
+      "confidence": 0.82,
+      "modelSuggestsHumanReview": true
+    },
+    "reviewDecision": {
+      "reviewRequired": true,
+      "reviewReasons": ["MISSING_INFORMATION", "MODEL_SUGGESTED_REVIEW"]
+    },
+    "retryCount": 0
+  }
+}
+```
+
+The exact model fields can vary. A failed model boundary returns `analysisStatus: "fallback"`, `analysis: null`, and mandatory review rather than fabricated content. Without `LLM_MODEL` and `LLM_API_KEY`, this endpoint returns `503 ANALYSIS_UNAVAILABLE`.
+
+### Retrieve the case and immutable history
+
+```bash
+curl http://localhost:3000/api/cases/<case-id> \
+  -H "X-Request-Id: readme-demo-retrieve"
+```
+
+The response contains case data and `analysisRuns` newest-first. It exposes business analysis and review fields but omits token counts, provider payloads, response IDs, prompts, cost, and internal exception details.
+
+### List cases requiring human review
+
+```bash
+curl "http://localhost:3000/api/reviews?status=required" \
+  -H "X-Request-Id: readme-demo-review-queue"
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "<case-id>",
+      "status": "REVIEW_REQUIRED",
+      "createdAt": "<timestamp>",
+      "updatedAt": "<timestamp>"
+    }
+  ]
+}
+```
+
+Every response includes `X-Request-Id`. Invalid input, malformed JSON, oversized bodies, missing resources, and unexpected failures use a stable `{ "error": { "code", "message", "requestId", "issues"? } }` envelope.
+
+## Human-in-the-loop policy
+
+The model may suggest review, but it cannot suppress review. The application independently requires it when any of these rules apply:
+
+- category is `safeguarding`;
+- severity is `high`;
+- confidence is below `HUMAN_REVIEW_CONFIDENCE_THRESHOLD` (default `0.75`);
+- `missingInformation` is non-empty;
+- the model suggests human review;
+- model output remains invalid or the provider call fails after bounded retry.
+
+All applicable reasons are preserved in deterministic order and persisted with the analysis run. The review queue returns only case ID, status, and timestamps; there is intentionally no autonomous close, sanction, notification, or other final-action endpoint.
+
+## Controlled tool calling
+
+The only tool is `get_previous_cases`. It is registered in an explicit allow-list, accepts a validated subject reference, performs a read-only lookup, and returns bounded metadata: prior-case count, distinct categories, and whether an earlier case remains open. It never returns report narratives or arbitrary database rows.
+
+Tool use is limited to one round across retries. Unknown tools, malformed arguments, and repository failures become explicit typed errors. Verify the contract with synthetic seed data:
+
+```bash
+npm run db:seed
+npm run tool:smoke
+```
+
+## Evaluation methodology and latest sample result
+
+The versioned `golden-v1` dataset contains **30 synthetic cases across six project-defined categories**. Expected labels are engineering fixtures created for this repository, not annotations from legal or safeguarding professionals. Each live evaluation runs the same schema-validation and deterministic review-policy layers as the API.
+
+The harness measures schema validity, category and severity agreement, final review-required agreement, critical-review recall, retries, latency, and token use. It stores a dataset hash and bounded per-fixture outcomes without report text or raw model output. Deterministic policy behavior is tested separately so an LLM score cannot substitute for application correctness.
+
+Latest recorded sample, run on **22 September 2026** with `openai/gpt-oss-20b` through Groq:
+
+| Metric                     | Observed result |
+| -------------------------- | --------------: |
+| Schema-valid response rate |    30/30 (100%) |
+| Category accuracy          |    30/30 (100%) |
+| Severity accuracy          |     24/30 (80%) |
+| Review-required accuracy   |   29/30 (96.7%) |
+| Critical-review recall     |    29/29 (100%) |
+| Average retries            |           0.000 |
+| Token usage                |    33,415 total |
+
+All four committed regression gates passed: 100% schema validity, 100% critical-review recall, at least 95% review-required accuracy, and at least 85% category accuracy. Seven fixtures still exposed severity, review-reason, or negative-control misses. The thresholds are regression alarms for this small synthetic dataset; they are not measures of legal correctness, fairness, production safety, or real-world effectiveness. Provider/model revisions can change live results.
+
+| Verification layer           | Network/DB | Purpose                                                        |
+| ---------------------------- | ---------- | -------------------------------------------------------------- |
+| Offline unit/API tests       | Neither    | Deterministic contracts, failure paths, logs, policy, tools    |
+| PostgreSQL integration tests | Database   | Transactions, migrations, retrieval, routing, minimized output |
+| Live model evaluation        | Provider   | Prompt/model behavior against versioned synthetic fixtures     |
+| Baseline comparison          | Neither    | Detect metric regressions on the same dataset hash             |
+
+See [Phase 12: Evaluation Harness](docs/phase-12-evaluation-harness.md) for formulas, gates, artifact shape, and known misses.
+
+## Privacy and synthetic-data boundary
+
+Use synthetic data only. Request bodies, descriptions, prompts, headers, raw model output, provider payloads, secrets, and exception causes are excluded from application logs. Evaluation reports exclude fixture narratives. Provider retention is still governed by the configured provider/account, and this repository does not prove deletion, residency, lawful basis, access control, or GDPR compliance.
+
+See [Privacy and Data Protection](docs/privacy.md) for implemented safeguards and the controls required before any real deployment.
+
+## Local setup
+
+Requirements: Node.js 24, npm, and PostgreSQL 17-compatible access.
+
+```bash
+git clone https://github.com/TheSameerCode/compliance-triage-agent.git
+cd compliance-triage-agent
+npm ci
+cp .env.example .env
+npm run db:deploy
+npm run dev
+```
+
+On PowerShell, use `Copy-Item .env.example .env` instead of `cp`. Set `DATABASE_URL` in the ignored `.env` to your migrated development database. Health, case-management, retrieval, and review endpoints need no LLM key.
+
+To enable live analysis, set all three values locally and use a model that supports this project's strict structured-output contract:
+
+```dotenv
+LLM_PROVIDER=groq
+LLM_MODEL=openai/gpt-oss-20b
+LLM_API_KEY=<your-key>
+```
+
+Supported adapters are `openai`, `gemini`, and `groq`. Never commit or paste a real key into source, documentation, issues, logs, or chat. The optional synthetic smoke check is:
 
 ```bash
 npm run llm:smoke
 ```
 
-The command prints only provider, model, prompt-version, result-type, and usage metadata—not the report or model output. Never commit or paste an API key into source, documentation, issues, or chat.
+It prints only provider, model, prompt version, result type, and token-usage metadata.
 
-For Gemini, keep the key only in the ignored `.env` file:
+## Docker setup
 
-```dotenv
-LLM_PROVIDER=gemini
-LLM_MODEL=gemini-3.7-flash
-LLM_API_KEY=<your-key>
-```
-
-For Groq's free tier, create a Groq API key and use a model that supports strict structured output:
-
-```dotenv
-LLM_PROVIDER=groq
-LLM_MODEL=openai/gpt-oss-20b
-LLM_API_KEY=<your-groq-key>
-```
-
-Groq retention controls, including Zero Data Retention, are account settings rather than request parameters. Keep this demo synthetic regardless of provider configuration.
-
-## HTTP API
-
-| Method | Path                           | Purpose                                                  |
-| ------ | ------------------------------ | -------------------------------------------------------- |
-| `GET`  | `/health`                      | Process liveness                                         |
-| `GET`  | `/ready`                       | PostgreSQL readiness                                     |
-| `POST` | `/api/cases`                   | Validate and create a case without implicit AI analysis  |
-| `POST` | `/api/cases/:id/analyze`       | Analyze, route, and persist one immutable run            |
-| `GET`  | `/api/cases/:id`               | Retrieve case metadata and business analysis history     |
-| `GET`  | `/api/reviews?status=required` | List minimized metadata for cases requiring human review |
-
-Requests and responses carry an `X-Request-Id`. JSON request bodies are limited to `32kb`, and errors use a stable `{ "error": { ... } }` envelope.
-
-## Local development
-
-Create `.env` from `.env.example`, configure a PostgreSQL database, and apply the committed migrations. The case-management, health, and review APIs can start without LLM credentials. Set both `LLM_MODEL` and `LLM_API_KEY` only when enabling live analysis; otherwise the analysis endpoint returns `503 ANALYSIS_UNAVAILABLE`.
-
-```bash
-npm install
-npm run db:deploy
-npm run dev
-```
-
-Create a synthetic case:
-
-```bash
-curl -X POST http://localhost:3000/api/cases \
-  -H "Content-Type: application/json" \
-  -d '{"description":"A synthetic report containing enough detail for initial triage.","reporterType":"member","subjectRef":"subject_demo_10"}'
-```
-
-Request analysis explicitly, replacing the example ID with the returned case ID:
-
-```bash
-curl -X POST http://localhost:3000/api/cases/<case-id>/analyze
-```
-
-This endpoint invokes the configured model and may consume provider quota. Use synthetic reports only.
-
-## Docker startup
-
-The Compose stack starts PostgreSQL, applies the committed migrations through a one-shot `migrate` service, and then starts the compiled API. Live analysis credentials are optional for health checks and case management.
+Docker Compose starts PostgreSQL, runs committed Prisma migrations in a one-shot container, and starts the compiled non-root API only after readiness succeeds:
 
 ```bash
 cp .env.example .env
 docker compose up --build --wait
 curl http://localhost:3000/health
+curl http://localhost:3000/ready
 ```
 
-Create a synthetic case after the stack is healthy:
+PowerShell users can again replace `cp` with `Copy-Item`. The default API port is `3000`; PostgreSQL is exposed on host port `5433`. Override them with `API_PORT` and `POSTGRES_PORT`. Live LLM credentials are optional unless calling the analysis endpoint.
 
-```bash
-curl -X POST http://localhost:3000/api/cases \
-  -H "Content-Type: application/json" \
-  -d '{"description":"A synthetic container verification report with sufficient detail.","reporterType":"reviewer","subjectRef":"subject_docker_demo"}'
-```
+Compose runs `prisma migrate deploy`, never `migrate dev`. Re-run pending committed migrations with `docker compose run --rm migrate`. Stop while preserving data with `docker compose down`. The destructive local reset `docker compose down --volumes` also removes the Compose database volume.
 
-Container resources:
-
-| Resource                 | Default                                      | Override                              |
-| ------------------------ | -------------------------------------------- | ------------------------------------- |
-| API port                 | `3000`                                       | `API_PORT`                            |
-| PostgreSQL host port     | `5433`                                       | `POSTGRES_PORT`                       |
-| PostgreSQL database      | `compliance_agent`                           | `POSTGRES_DB`                         |
-| PostgreSQL user/password | `postgres` / `postgres` development defaults | `POSTGRES_USER` / `POSTGRES_PASSWORD` |
-| Database storage         | named volume `postgres_data`                 | managed by Compose                    |
-
-Compose runs `prisma migrate deploy`, never the development-oriented `migrate dev`, before allowing the API to start. Reapply pending committed migrations explicitly with:
-
-```bash
-docker compose run --rm migrate
-```
-
-Stop containers while retaining database data with `docker compose down`. `docker compose down --volumes` also deletes the Compose PostgreSQL volume and should only be used when an intentional local reset is wanted.
-
-## Quality checks
+## Tests
 
 ```bash
 npm run format:check
@@ -133,62 +286,63 @@ npm run typecheck
 npm test
 npm run test:coverage
 npm run build
+npm run db:validate
 ```
 
-The normal test suite and coverage report are database-independent and never call a live model. Coverage is reported for API, domain, and service code to expose untested safety-critical paths; it is not presented as proof of system safety. With the migrated synthetic development database available through `DATABASE_URL`, run the separate PostgreSQL API tests with:
+The normal suite is database-independent and makes no provider calls. With a migrated synthetic PostgreSQL database available through `DATABASE_URL`, run:
 
 ```bash
 npm run test:integration
 ```
 
-Integration tests remove only the exact synthetic records that they create.
+Integration tests create uniquely identified synthetic records and delete only those records. Coverage highlights untested safety-critical branches; a coverage percentage is not evidence of system safety.
 
-## Continuous integration
+The normal GitHub Actions workflow runs formatting, typechecking, linting, deterministic tests, migrations, PostgreSQL integration tests, the build, and Prisma validation on pushes to `main` and pull requests. It receives no LLM secret. See the [CI workflow](.github/workflows/ci.yml).
 
-The `CI` GitHub Actions workflow runs on every push to `main` and every pull request. It installs only the committed dependency graph with `npm ci`, then runs formatting, typechecking, linting, deterministic tests, committed migrations, PostgreSQL integration tests, the production build, and Prisma validation. PostgreSQL runs as an isolated service container, and normal CI receives no LLM secret or live-model access.
+## Live evaluations
 
-Live model evaluation is deliberately separate. To enable the manual workflow:
-
-1. create a repository Actions secret named `LLM_API_KEY` containing the key for the provider you intend to select;
-2. open **Actions → Live model evaluation → Run workflow**;
-3. run it from `main`, select the provider and model, and choose the request interval appropriate for the account limits.
-
-The manual job runs `npm run eval`, fails when a committed regression gate fails, and retains `evals/results/latest.json` as a 14-day workflow artifact. It is never triggered by pull requests or ordinary pushes. The report remains a synthetic engineering evaluation, not a production-safety or legal-compliance claim.
-
-Verify the committed prior-case seed through the read-only tool contract:
-
-```bash
-npm run db:seed
-npm run tool:smoke
-```
-
-## Model evaluation
-
-Run the 30-case synthetic golden dataset against the configured provider:
+Configure the ignored `.env`, then run the 30-case live evaluation:
 
 ```bash
 npm run eval
 ```
 
-The live command consumes provider quota and returns non-zero when a committed regression gate fails. Groq evaluations default to a 9-second interval; `EVAL_REQUEST_INTERVAL_MS` in the ignored `.env` file can override provider pacing. Generated reports are written to `evals/results/latest.json` and excluded from git.
+The command consumes provider quota, writes the ignored `evals/results/latest.json`, and exits non-zero when a committed gate fails. Groq defaults to a nine-second interval; `EVAL_REQUEST_INTERVAL_MS` can override pacing.
 
-Compare two reports produced from the same dataset:
+Compare two reports produced from the same dataset hash:
 
 ```bash
 npm run eval:compare -- path/to/baseline.json path/to/candidate.json
 ```
 
-The synthetic regression gates are engineering checks, not production safety or compliance guarantees.
+A separate manually dispatched [live evaluation workflow](.github/workflows/live-evaluation.yml) reads the repository secret `LLM_API_KEY`, applies the same gates, and retains the minimized report as a 14-day artifact. It never runs on pull requests or ordinary pushes.
 
-## Privacy and limitations
+## Limitations
 
-This public demo has no authentication or authorization and must not be exposed as a production service or used with real reports. See [Privacy and Data Protection](docs/privacy.md) for the boundary between demo safeguards and production requirements.
+- The 30-case dataset is small, synthetic, and project-authored; it contains no real domain-expert labels and cannot establish real-world quality.
+- The public API has no authentication, authorization, tenant isolation, rate limiting, or user audit trail and must not be exposed as a production service.
+- The repository makes no GDPR, legal-compliance, production-safety, fairness, or fitness-for-purpose claim.
+- Three provider adapters exist, but only one Groq/model configuration has a recorded baseline; provider parity and failover behavior are not established.
+- Tool use is intentionally limited to one bounded read-only metadata lookup; there is no general agent planner or write-capable tool.
+- The system produces triage suggestions and routing only. It cannot autonomously make or execute final decisions about people or cases.
+- No real compliance, safeguarding, legal, or data-protection professionals validated the fixtures, policy thresholds, or output labels.
+- This is not production deployed. Security review, threat modeling, legal/data-protection review, access controls, retention/deletion controls, incident response, monitoring, and operational ownership are still required.
 
-## Implementation documentation
+## Future improvements
 
-- [Phase 1: Engineering Foundation](docs/phase-1-engineering-foundation.md)
+- Add authenticated users, roles, tenant boundaries, immutable reviewer actions, and a complete audit trail.
+- Co-design a representative dataset and policy with domain experts, then assess subgroup behavior and calibration.
+- Add provider-independent contract tests, approved failover policy, budget controls, and drift monitoring.
+- Add encryption/key-management, retention and deletion workflows, residency controls, backups, and disaster recovery.
+- Build a reviewer UI that displays evidence, uncertainty, policy reasons, and model provenance without exposing sensitive telemetry.
+- Add deployment manifests, staged rollouts, service-level objectives, alerting, and rollback exercises after security and legal review.
+
+## Documentation
+
+- [Interview demo runbook](docs/demo.md)
 - [Reliability and Safety Invariants](docs/reliability.md)
 - [Privacy and Data Protection](docs/privacy.md)
+- [Phase 1: Engineering Foundation](docs/phase-1-engineering-foundation.md)
 - [Phase 5: Provider-Isolated LLM Layer](docs/phase-5-llm-layer.md)
 - [Phase 6: Validated Analysis Pipeline](docs/phase-6-analysis-pipeline.md)
 - [Phase 7: Retry, Failure Handling, and Safe Fallback](docs/phase-7-retry-and-fallback.md)
