@@ -24,23 +24,19 @@ export const environmentSchema = z
     HUMAN_REVIEW_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.75),
   })
   .superRefine((environment, context) => {
-    if (environment.NODE_ENV === 'test') {
-      return;
-    }
-
-    if (environment.LLM_MODEL === undefined) {
+    if (environment.LLM_MODEL === undefined && environment.LLM_API_KEY !== undefined) {
       context.addIssue({
         code: 'custom',
         path: ['LLM_MODEL'],
-        message: 'LLM_MODEL is required outside test mode',
+        message: 'LLM_MODEL is required when LLM_API_KEY is configured',
       });
     }
 
-    if (environment.LLM_API_KEY === undefined) {
+    if (environment.LLM_MODEL !== undefined && environment.LLM_API_KEY === undefined) {
       context.addIssue({
         code: 'custom',
         path: ['LLM_API_KEY'],
-        message: 'LLM_API_KEY is required outside test mode',
+        message: 'LLM_API_KEY is required when LLM_MODEL is configured',
       });
     }
   });

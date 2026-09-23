@@ -57,12 +57,26 @@ describe('loadEnvironment', () => {
     expect(() => loadEnvironment({ NODE_ENV: 'test' })).toThrow(/DATABASE_URL/u);
   });
 
-  it('requires model configuration outside test mode', () => {
+  it('allows the base API to start in production without optional LLM credentials', () => {
+    const environment = loadEnvironment({
+      NODE_ENV: 'production',
+      DATABASE_URL: testDatabaseUrl,
+    });
+
+    expect(environment.LLM_MODEL).toBeUndefined();
+    expect(environment.LLM_API_KEY).toBeUndefined();
+  });
+
+  it.each([
+    [{ LLM_MODEL: 'test-model' }, /LLM_API_KEY/u],
+    [{ LLM_API_KEY: 'test-key-not-real' }, /LLM_MODEL/u],
+  ])('rejects incomplete LLM configuration', (llmConfiguration, expectedError) => {
     expect(() =>
       loadEnvironment({
         NODE_ENV: 'production',
         DATABASE_URL: testDatabaseUrl,
+        ...llmConfiguration,
       }),
-    ).toThrow(/LLM_MODEL.*LLM_API_KEY/u);
+    ).toThrow(expectedError);
   });
 });

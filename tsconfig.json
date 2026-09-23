@@ -5,6 +5,7 @@
     "types": ["node"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "rewriteRelativeImportExtensions": true,
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
