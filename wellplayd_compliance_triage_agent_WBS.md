@@ -1864,7 +1864,7 @@ returns a healthy response.
 
 ## WBS 14 — CI and Evaluation Workflows
 
-### WBS 14.1 — Add deterministic CI workflow `[ ]`
+### WBS 14.1 — Add deterministic CI workflow `[x]`
 
 **Priority:** P0  
 **Dependencies:** 12.1–12.6
@@ -1893,7 +1893,7 @@ checkout
 
 ---
 
-### WBS 14.2 — Add database service to CI if needed `[ ]`
+### WBS 14.2 — Add database service to CI if needed `[x]`
 
 **Priority:** P0  
 **Dependencies:** 14.1, 12.6
@@ -1908,7 +1908,7 @@ If integration tests require PostgreSQL, configure a CI service container and ru
 
 ---
 
-### WBS 14.3 — Add manual/secured real-model eval workflow `[ ]`
+### WBS 14.3 — Add manual/secured real-model eval workflow `[x]`
 
 **Priority:** P1  
 **Dependencies:** 11.1–11.4
@@ -2695,9 +2695,9 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 - [x] WBS 13.2 Compose
 - [x] WBS 13.3 migration instructions
 - [x] WBS 13.4 clean startup
-- [ ] WBS 14.1 deterministic CI
-- [ ] WBS 14.2 CI database if needed
-- [ ] WBS 14.3 manual eval workflow if feasible
+- [x] WBS 14.1 deterministic CI
+- [x] WBS 14.2 CI database if needed
+- [x] WBS 14.3 manual eval workflow if feasible
 
 ### Block I — Documentation and final QA
 

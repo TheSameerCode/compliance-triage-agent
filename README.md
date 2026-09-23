@@ -1,5 +1,7 @@
 # Compliance Triage Agent
 
+[![CI](https://github.com/TheSameerCode/compliance-triage-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/TheSameerCode/compliance-triage-agent/actions/workflows/ci.yml)
+
 A production-oriented LLM compliance triage demo focused on validated structured output, deterministic safeguards, and human review.
 
 > Work in progress: the project is being implemented from the included work breakdown structure.
@@ -141,6 +143,18 @@ npm run test:integration
 
 Integration tests remove only the exact synthetic records that they create.
 
+## Continuous integration
+
+The `CI` GitHub Actions workflow runs on every push to `main` and every pull request. It installs only the committed dependency graph with `npm ci`, then runs formatting, typechecking, linting, deterministic tests, committed migrations, PostgreSQL integration tests, the production build, and Prisma validation. PostgreSQL runs as an isolated service container, and normal CI receives no LLM secret or live-model access.
+
+Live model evaluation is deliberately separate. To enable the manual workflow:
+
+1. create a repository Actions secret named `LLM_API_KEY` containing the key for the provider you intend to select;
+2. open **Actions → Live model evaluation → Run workflow**;
+3. run it from `main`, select the provider and model, and choose the request interval appropriate for the account limits.
+
+The manual job runs `npm run eval`, fails when a committed regression gate fails, and retains `evals/results/latest.json` as a 14-day workflow artifact. It is never triggered by pull requests or ordinary pushes. The report remains a synthetic engineering evaluation, not a production-safety or legal-compliance claim.
+
 Verify the committed prior-case seed through the read-only tool contract:
 
 ```bash
@@ -185,3 +199,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 12: Evaluation Harness and Regression Gates](docs/phase-12-evaluation-harness.md)
 - [Phase 13: Deterministic Automated Tests](docs/phase-13-automated-tests.md)
 - [WBS 13: Dockerized Runtime](docs/wbs-13-dockerized-runtime.md)
+- [WBS 14: CI and Evaluation Workflows](docs/wbs-14-ci-and-evaluation-workflows.md)
