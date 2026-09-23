@@ -1,0 +1,80 @@
+name: Live model evaluation
+
+run-name: Evaluate ${{ inputs.provider }} / ${{ inputs.model }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Model provider
+        required: true
+        type: choice
+        default: groq
+        options:
+          - groq
+          - openai
+          - gemini
+      model:
+        description: Provider model identifier
+        required: true
+        type: string
+        default: openai/gpt-oss-20b
+      request_interval_ms:
+        description: Delay between evaluation requests in milliseconds
+        required: true
+        type: string
+        default: '9000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-model-evaluation
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    name: Golden dataset regression evaluation
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LLM_PROVIDER: ${{ inputs.provider }}
+      LLM_MODEL: ${{ inputs.model }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      EVAL_REQUEST_INTERVAL_MS: ${{ inputs.request_interval_ms }}
+
+    steps:
+      - name: Check out reviewed main branch
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js without dependency caching
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.19.0
+          package-manager-cache: false
+
+      - name: Require configured provider secret
+        shell: bash
+        run: |
+          if [[ -z "${LLM_API_KEY}" ]]; then
+            echo "::error::Configure the LLM_API_KEY repository secret before running a live evaluation."
+            exit 1
+          fi
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run golden evaluation and regression gates
+        run: npm run eval
+
+      - name: Upload minimized evaluation report
+        if: always() && hashFiles('evals/results/latest.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: evaluation-${{ inputs.provider }}-${{ github.run_id }}
+          path: evals/results/latest.json
+          if-no-files-found: error
+          retention-days: 14
