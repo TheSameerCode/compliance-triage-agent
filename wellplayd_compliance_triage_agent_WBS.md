@@ -2110,7 +2110,7 @@ Create `docs/demo.md` with a 5–8 minute sequence:
 
 ## WBS 16 — Final QA and Release Candidate
 
-### WBS 16.1 — Run clean-clone test `[ ]`
+### WBS 16.1 — Run clean-clone test `[x]`
 
 **Priority:** P0  
 **Dependencies:** All P0 implementation
@@ -2135,7 +2135,7 @@ Fix every undocumented manual step.
 
 ---
 
-### WBS 16.2 — Run quality commands `[ ]`
+### WBS 16.2 — Run quality commands `[x]`
 
 **Priority:** P0
 **Dependencies:** All P0 implementation and tests
@@ -2160,7 +2160,7 @@ npm run eval
 
 ---
 
-### WBS 16.3 — Security/privacy sweep `[ ]`
+### WBS 16.3 — Security/privacy sweep `[x]`
 
 **Priority:** P0
 **Dependencies:** All P0 implementation and documentation
@@ -2179,7 +2179,7 @@ Search repository for:
 
 ---
 
-### WBS 16.4 — Reliability review `[ ]`
+### WBS 16.4 — Reliability review `[x]`
 
 **Priority:** P0
 **Dependencies:** WBS 6, 7, 8, 11, 12 complete as applicable
@@ -2202,7 +2202,7 @@ Manually verify:
 
 ---
 
-### WBS 16.5 — Reviewer experience sweep `[ ]`
+### WBS 16.5 — Reviewer experience sweep `[x]`
 
 **Priority:** P0
 **Dependencies:** WBS 15 complete
@@ -2230,7 +2230,7 @@ If any answer requires searching through source code, improve README navigation.
 
 ---
 
-### WBS 16.6 — Tag release candidate `[ ]`
+### WBS 16.6 — Tag release candidate `[x]`
 
 **Priority:** P1
 **Dependencies:** WBS 16.1–16.5 complete
@@ -2535,63 +2535,63 @@ The project is application-ready only when all items below are true.
 
 ## Functional
 
-- [ ] A synthetic case can be created through the API.
-- [ ] A case can be analyzed with a configured live LLM.
-- [ ] LLM output is schema validated.
-- [ ] Invalid output triggers at most one controlled retry.
-- [ ] Repeated invalid output routes safely to human review.
-- [ ] Provider errors produce an explicit safe state.
-- [ ] Deterministic rules override model self-confidence/suggestion.
-- [ ] Analysis runs and case routing status are persisted atomically in PostgreSQL.
-- [ ] Review-required cases are retrievable.
-- [ ] One allow-listed read-only tool works with synthetic prior cases.
+- [x] A synthetic case can be created through the API.
+- [x] A case can be analyzed with a configured live LLM.
+- [x] LLM output is schema validated.
+- [x] Invalid output triggers at most one controlled retry.
+- [x] Repeated invalid output routes safely to human review.
+- [x] Provider errors produce an explicit safe state.
+- [x] Deterministic rules override model self-confidence/suggestion.
+- [x] Analysis runs and case routing status are persisted atomically in PostgreSQL.
+- [x] Review-required cases are retrievable.
+- [x] One allow-listed read-only tool works with synthetic prior cases.
 
 ## Testing
 
-- [ ] Domain schema tests pass.
-- [ ] Human-review policy tests pass.
-- [ ] Retry/fallback tests pass.
-- [ ] API integration tests pass.
-- [ ] Tests do not require a live LLM API key.
+- [x] Domain schema tests pass.
+- [x] Human-review policy tests pass.
+- [x] Retry/fallback tests pass.
+- [x] API integration tests pass.
+- [x] Tests do not require a live LLM API key.
 
 ## Evaluation
 
-- [ ] At least 24–30 versioned synthetic golden cases exist.
-- [ ] Evaluation runner produces metrics.
-- [ ] Critical human-review recall is reported.
-- [ ] Regression thresholds are encoded in source.
-- [ ] Evaluation failures identify fixture IDs.
-- [ ] Latest evaluation can be reproduced with documented command/configuration.
+- [x] At least 24–30 versioned synthetic golden cases exist.
+- [x] Evaluation runner produces metrics.
+- [x] Critical human-review recall is reported.
+- [x] Regression thresholds are encoded in source.
+- [x] Evaluation failures identify fixture IDs.
+- [x] Latest evaluation can be reproduced with documented command/configuration.
 
 ## Engineering
 
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm test` passes.
-- [ ] `npm run build` passes.
-- [ ] Docker Compose starts API + PostgreSQL.
-- [ ] Database migrations are documented/reproducible.
-- [ ] Normal GitHub Actions CI is green.
-- [ ] Real-model eval workflow is separate and secured.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm test` passes.
+- [x] `npm run build` passes.
+- [x] Docker Compose starts API + PostgreSQL.
+- [x] Database migrations are documented/reproducible.
+- [x] Normal GitHub Actions CI is green.
+- [x] Real-model eval workflow is separate and secured.
 
 ## Privacy/reliability
 
-- [ ] No real sensitive case data exists in the repository.
-- [ ] Raw case descriptions are not logged.
-- [ ] No API keys are committed.
-- [ ] Prompt version is traceable.
-- [ ] Tool calls are allow-listed and bounded.
-- [ ] LLM cannot resolve/close a case.
-- [ ] README explicitly states project limitations.
+- [x] No real sensitive case data exists in the repository.
+- [x] Raw case descriptions are not logged.
+- [x] No API keys are committed.
+- [x] Prompt version is traceable.
+- [x] Tool calls are allow-listed and bounded.
+- [x] LLM cannot resolve/close a case.
+- [x] README explicitly states project limitations.
 
 ## Reviewer experience
 
-- [ ] README explains the project in under one minute of reading.
-- [ ] Architecture is visible without reading source code.
-- [ ] “What happens when the model is wrong?” is clearly documented.
-- [ ] Example API calls are copy-pasteable.
-- [ ] Evaluation approach/results are easy to locate.
-- [ ] Repository can be run from a clean clone using documented steps.
+- [x] README explains the project in under one minute of reading.
+- [x] Architecture is visible without reading source code.
+- [x] “What happens when the model is wrong?” is clearly documented.
+- [x] Example API calls are copy-pasteable.
+- [x] Evaluation approach/results are easy to locate.
+- [x] Repository can be run from a clean clone using documented steps.
 
 ---
 
@@ -2708,11 +2708,11 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 - [x] WBS 15.4 eval methodology
 - [x] WBS 15.5 limitations
 - [x] WBS 15.6 demo script
-- [ ] WBS 16.1 clean-clone test
-- [ ] WBS 16.2 quality commands
-- [ ] WBS 16.3 security sweep
-- [ ] WBS 16.4 reliability review
-- [ ] WBS 16.5 reviewer experience sweep
+- [x] WBS 16.1 clean-clone test
+- [x] WBS 16.2 quality commands
+- [x] WBS 16.3 security sweep
+- [x] WBS 16.4 reliability review
+- [x] WBS 16.5 reviewer experience sweep
 
 **Final checkpoint:** repository is ready to link directly in the application email.
 
@@ -2827,52 +2827,52 @@ Before declaring any implementation “complete”, answer all of the following 
 
 ## Architecture
 
-- [ ] Are controllers thin?
-- [ ] Is provider-specific code isolated?
-- [ ] Are domain schemas independent from provider objects?
-- [ ] Are review rules deterministic and separate from prompts?
-- [ ] Can the LLM client be replaced by a fake in tests?
+- [x] Are controllers thin?
+- [x] Is provider-specific code isolated?
+- [x] Are domain schemas independent from provider objects?
+- [x] Are review rules deterministic and separate from prompts?
+- [x] Can the LLM client be replaced by a fake in tests?
 
 ## Reliability
 
-- [ ] Is all LLM output validated locally?
-- [ ] Is retry bounded?
-- [ ] Is repeated failure explicit and safe?
-- [ ] Can high-risk rules override model confidence?
-- [ ] Are review reasons auditable?
-- [ ] Are tool calls allow-listed and bounded?
+- [x] Is all LLM output validated locally?
+- [x] Is retry bounded?
+- [x] Is repeated failure explicit and safe?
+- [x] Can high-risk rules override model confidence?
+- [x] Are review reasons auditable?
+- [x] Are tool calls allow-listed and bounded?
 
 ## Testing
 
-- [ ] Can tests run offline from the LLM provider?
-- [ ] Are malformed outputs tested?
-- [ ] Are provider errors tested?
-- [ ] Are high-risk review paths tested?
-- [ ] Are API errors tested?
+- [x] Can tests run offline from the LLM provider?
+- [x] Are malformed outputs tested?
+- [x] Are provider errors tested?
+- [x] Are high-risk review paths tested?
+- [x] Are API errors tested?
 
 ## Evals
 
-- [ ] Is the fixture set versioned?
-- [ ] Are labels stable and documented?
-- [ ] Is critical human-review recall reported?
-- [ ] Do regression failures return non-zero exit status?
-- [ ] Are prompt/model versions recorded with eval output?
+- [x] Is the fixture set versioned?
+- [x] Are labels stable and documented?
+- [x] Is critical human-review recall reported?
+- [x] Do regression failures return non-zero exit status?
+- [x] Are prompt/model versions recorded with eval output?
 
 ## Privacy/security
 
-- [ ] Is all committed case data synthetic?
-- [ ] Are secrets excluded?
-- [ ] Are raw case descriptions excluded from logs?
-- [ ] Is tool output minimized?
-- [ ] Does documentation avoid false production/GDPR claims?
+- [x] Is all committed case data synthetic?
+- [x] Are secrets excluded?
+- [x] Are raw case descriptions excluded from logs?
+- [x] Is tool output minimized?
+- [x] Does documentation avoid false production/GDPR claims?
 
 ## Developer experience
 
-- [ ] Can a fresh clone install/build/test successfully?
-- [ ] Can Docker Compose start the stack?
-- [ ] Are migrations documented?
-- [ ] Are example API calls copy-pasteable?
-- [ ] Does README explain the core idea before setup details?
+- [x] Can a fresh clone install/build/test successfully?
+- [x] Can Docker Compose start the stack?
+- [x] Are migrations documented?
+- [x] Are example API calls copy-pasteable?
+- [x] Does README explain the core idea before setup details?
 
 ---
 
