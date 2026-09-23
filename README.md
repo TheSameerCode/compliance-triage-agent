@@ -62,7 +62,7 @@ Requests and responses carry an `X-Request-Id`. JSON request bodies are limited 
 
 ## Local development
 
-Create `.env` from `.env.example`, configure a PostgreSQL database, and apply the committed migrations. A real LLM key is not required for the current API when `NODE_ENV=test`.
+Create `.env` from `.env.example`, configure a PostgreSQL database, and apply the committed migrations. The case-management, health, and review APIs can start without LLM credentials. Set both `LLM_MODEL` and `LLM_API_KEY` only when enabling live analysis; otherwise the analysis endpoint returns `503 ANALYSIS_UNAVAILABLE`.
 
 ```bash
 npm install
@@ -85,6 +85,42 @@ curl -X POST http://localhost:3000/api/cases/<case-id>/analyze
 ```
 
 This endpoint invokes the configured model and may consume provider quota. Use synthetic reports only.
+
+## Docker startup
+
+The Compose stack starts PostgreSQL, applies the committed migrations through a one-shot `migrate` service, and then starts the compiled API. Live analysis credentials are optional for health checks and case management.
+
+```bash
+cp .env.example .env
+docker compose up --build --wait
+curl http://localhost:3000/health
+```
+
+Create a synthetic case after the stack is healthy:
+
+```bash
+curl -X POST http://localhost:3000/api/cases \
+  -H "Content-Type: application/json" \
+  -d '{"description":"A synthetic container verification report with sufficient detail.","reporterType":"reviewer","subjectRef":"subject_docker_demo"}'
+```
+
+Container resources:
+
+| Resource                 | Default                                      | Override                              |
+| ------------------------ | -------------------------------------------- | ------------------------------------- |
+| API port                 | `3000`                                       | `API_PORT`                            |
+| PostgreSQL host port     | `5433`                                       | `POSTGRES_PORT`                       |
+| PostgreSQL database      | `compliance_agent`                           | `POSTGRES_DB`                         |
+| PostgreSQL user/password | `postgres` / `postgres` development defaults | `POSTGRES_USER` / `POSTGRES_PASSWORD` |
+| Database storage         | named volume `postgres_data`                 | managed by Compose                    |
+
+Compose runs `prisma migrate deploy`, never the development-oriented `migrate dev`, before allowing the API to start. Reapply pending committed migrations explicitly with:
+
+```bash
+docker compose run --rm migrate
+```
+
+Stop containers while retaining database data with `docker compose down`. `docker compose down --volumes` also deletes the Compose PostgreSQL volume and should only be used when an intentional local reset is wanted.
 
 ## Quality checks
 
@@ -148,3 +184,4 @@ This public demo has no authentication or authorization and must not be exposed 
 - [Phase 11: Golden Evaluation Dataset](docs/phase-11-golden-evaluation-dataset.md)
 - [Phase 12: Evaluation Harness and Regression Gates](docs/phase-12-evaluation-harness.md)
 - [Phase 13: Deterministic Automated Tests](docs/phase-13-automated-tests.md)
+- [WBS 13: Dockerized Runtime](docs/wbs-13-dockerized-runtime.md)

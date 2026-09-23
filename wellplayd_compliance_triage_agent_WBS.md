@@ -1772,7 +1772,7 @@ Document the most safety-critical tested paths in README.
 
 ## WBS 13 — Dockerized Runtime
 
-### WBS 13.1 — Create application Dockerfile `[ ]`
+### WBS 13.1 — Create application Dockerfile `[x]`
 
 **Priority:** P0  
 **Dependencies:** 0.2, 3.1
@@ -1795,7 +1795,7 @@ Prefer a multi-stage build if it remains simple.
 
 ---
 
-### WBS 13.2 — Create Docker Compose stack `[ ]`
+### WBS 13.2 — Create Docker Compose stack `[x]`
 
 **Priority:** P0  
 **Dependencies:** 2.1, 13.1
@@ -1815,7 +1815,7 @@ Include a PostgreSQL health check and correct service dependency behavior.
 
 ---
 
-### WBS 13.3 — Make migrations reproducible `[ ]`
+### WBS 13.3 — Make migrations reproducible `[x]`
 
 **Priority:** P0  
 **Dependencies:** 13.2
@@ -1831,7 +1831,7 @@ Avoid surprising destructive migration behavior on startup.
 
 ---
 
-### WBS 13.4 — Validate one-command startup `[ ]`
+### WBS 13.4 — Validate one-command startup `[x]`
 
 **Priority:** P0  
 **Dependencies:** 13.2, 13.3
@@ -2691,10 +2691,10 @@ This ordering optimizes for a functioning, defensible project rather than maximu
 
 ### Block H — Shipping discipline
 
-- [ ] WBS 13.1 Dockerfile
-- [ ] WBS 13.2 Compose
-- [ ] WBS 13.3 migration instructions
-- [ ] WBS 13.4 clean startup
+- [x] WBS 13.1 Dockerfile
+- [x] WBS 13.2 Compose
+- [x] WBS 13.3 migration instructions
+- [x] WBS 13.4 clean startup
 - [ ] WBS 14.1 deterministic CI
 - [ ] WBS 14.2 CI database if needed
 - [ ] WBS 14.3 manual eval workflow if feasible
