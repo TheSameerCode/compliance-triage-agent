@@ -66,7 +66,7 @@ The LLM never owns routing. A syntactically valid answer can still be routed to 
 
 ## API walkthrough
 
-All examples below use invented reports. Start the service first, then replace `<case-id>` with the ID returned by case creation. Analysis consumes provider quota when live model credentials are configured.
+All examples below use invented reports. The `curl` blocks use Bash syntax and work in Git Bash, WSL, Linux, and macOS. Native Windows PowerShell users can use the complete PowerShell flow after the `curl` examples. Start the service first, then replace `<case-id>` with the ID returned by case creation. Analysis consumes provider quota when live model credentials are configured.
 
 ### Health and readiness
 
@@ -172,6 +172,34 @@ curl "http://localhost:3000/api/reviews?status=required" \
 
 Every response includes `X-Request-Id`. Invalid input, malformed JSON, oversized bodies, missing resources, and unexpected failures use a stable `{ "error": { "code", "message", "requestId", "issues"? } }` envelope.
 
+### Native PowerShell API flow
+
+This block covers every public endpoint without Bash quoting or line-continuation rules:
+
+```powershell
+$health = Invoke-RestMethod http://localhost:3000/health
+$ready = Invoke-RestMethod http://localhost:3000/ready
+
+$body = @{
+  description = 'A synthetic PowerShell report with enough detail for triage.'
+  reporterType = 'member'
+  subjectRef = 'subject_powershell_demo'
+} | ConvertTo-Json
+
+$created = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://localhost:3000/api/cases `
+  -ContentType 'application/json' `
+  -Body $body
+
+$caseId = $created.data.id
+$analysis = Invoke-RestMethod -Method Post "http://localhost:3000/api/cases/$caseId/analyze"
+$case = Invoke-RestMethod "http://localhost:3000/api/cases/$caseId"
+$reviews = Invoke-RestMethod 'http://localhost:3000/api/reviews?status=required'
+```
+
+If live model credentials are intentionally absent, the analysis line returns the documented `503 ANALYSIS_UNAVAILABLE`; the other five calls remain available.
+
 ## Human-in-the-loop policy
 
 The model may suggest review, but it cannot suppress review. The application independently requires it when any of these rules apply:
@@ -202,19 +230,21 @@ The versioned `golden-v1` dataset contains **30 synthetic cases across six proje
 
 The harness measures schema validity, category and severity agreement, final review-required agreement, critical-review recall, retries, latency, and token use. It stores a dataset hash and bounded per-fixture outcomes without report text or raw model output. Deterministic policy behavior is tested separately so an LLM score cannot substitute for application correctness.
 
-Latest recorded sample, run on **22 September 2026** with `openai/gpt-oss-20b` through Groq:
+Latest recorded sample, run on **23 September 2026** with `openai/gpt-oss-20b` through Groq during release-candidate QA:
 
 | Metric                     | Observed result |
 | -------------------------- | --------------: |
-| Schema-valid response rate |    30/30 (100%) |
-| Category accuracy          |    30/30 (100%) |
-| Severity accuracy          |     24/30 (80%) |
-| Review-required accuracy   |   29/30 (96.7%) |
+| Schema-valid response rate |   29/30 (96.7%) |
+| Category accuracy          |   29/30 (96.7%) |
+| Severity accuracy          |   25/30 (83.3%) |
+| Review-required accuracy   |    30/30 (100%) |
 | Critical-review recall     |    29/29 (100%) |
 | Average retries            |           0.000 |
-| Token usage                |    33,415 total |
+| Token usage                |    32,510 total |
 
-All four committed regression gates passed: 100% schema validity, 100% critical-review recall, at least 95% review-required accuracy, and at least 85% category accuracy. Seven fixtures still exposed severity, review-reason, or negative-control misses. The thresholds are regression alarms for this small synthetic dataset; they are not measures of legal correctness, fairness, production safety, or real-world effectiveness. Provider/model revisions can change live results.
+The **schema-validity gate failed**. Groq rejected the adversarial prompt-injection fixture with `PROVIDER_REJECTED`; the application returned no invented analysis and routed it to mandatory human review. The other three gates passed, including 100% critical-review recall. This result is intentionally recorded rather than rerun until a favorable sample appears. The earlier 22 September baseline passed all four gates and remains documented in [Phase 12: Evaluation Harness](docs/phase-12-evaluation-harness.md).
+
+These thresholds are regression alarms for a small synthetic dataset, not measures of legal correctness, fairness, production safety, or real-world effectiveness. Provider/model revisions can change live results, as the two recorded runs demonstrate.
 
 | Verification layer           | Network/DB | Purpose                                                        |
 | ---------------------------- | ---------- | -------------------------------------------------------------- |
@@ -354,3 +384,5 @@ A separate manually dispatched [live evaluation workflow](.github/workflows/live
 - [Phase 13: Deterministic Automated Tests](docs/phase-13-automated-tests.md)
 - [WBS 13: Dockerized Runtime](docs/wbs-13-dockerized-runtime.md)
 - [WBS 14: CI and Evaluation Workflows](docs/wbs-14-ci-and-evaluation-workflows.md)
+- [Phase 16: Release-Candidate QA](docs/phase-16-release-candidate.md)
+- [v0.1.0 Release Notes](docs/releases/v0.1.0.md)

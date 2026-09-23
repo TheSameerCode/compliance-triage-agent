@@ -20,6 +20,8 @@ This is a **seven-minute, synthetic-data-only** walkthrough of the engineering d
 
 Use only invented data. Do not show the `.env` file, terminal history containing a key, provider dashboards, or raw provider payloads on screen.
 
+The API snippets below use Bash syntax. On native Windows PowerShell, use the equivalent end-to-end PowerShell block in the README; it stores the returned ID in `$caseId`, so the create, analyze, retrieve, and review-queue steps can be presented without shell-quoting changes.
+
 1. Pull the current `main` branch and install from the lockfile.
 2. Put a working provider/model/key in the ignored `.env` file.
 3. Start the Compose stack and confirm both probes.
